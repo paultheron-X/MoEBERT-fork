@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .gates import GatesMapper
+
 
 class MoELayer(nn.Module):
     def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list):
@@ -17,6 +19,8 @@ class MoELayer(nn.Module):
             self.hash_list = self._random_hash_list(vocab_size)
         elif route_method == "hash-balance":
             self.hash_list = self._balance_hash_list(hash_list)
+        elif route_method in ["topk", "dselectk", "soft_tree"]:
+            self.gate = GatesMapper[route_method](hidden_size, num_experts)
         else:
             raise KeyError("Routing method not supported.")
 
@@ -65,6 +69,45 @@ class MoELayer(nn.Module):
         x = x.view(bsz, seq_len, dim)
 
         return x, balance_loss, gate_load
+
+    def _forward_soft_tree_token(self, x):
+        bsz, seq_len, dim = x.size()
+
+        x = x.view(-1, dim)
+        logits_gate = self.gate.forward(x)
+        prob_gate = F.softmax(logits_gate, dim=-1)
+        gate = torch.argmax(prob_gate, dim=-1)
+
+        order = gate.argsort(0)
+        num_tokens = F.one_hot(gate, self.num_experts).gt(0).sum(0)
+        gate_load = num_tokens.clone()
+        x = x[order]  # reorder according to expert number
+        x = x.split(num_tokens.tolist(), dim=0)  # a list of length self.num_experts
+
+        # compute the load balancing loss
+        P = prob_gate.mean(0)
+        temp = num_tokens.float()
+        f = temp / temp.sum(0, keepdim=True)
+        balance_loss = self.num_experts * torch.sum(P * f)
+
+        prob_gate = prob_gate.gather(dim=1, index=gate.unsqueeze(1))
+        prob_gate = prob_gate[order]
+        prob_gate = prob_gate.split(num_tokens.tolist(), dim=0)
+
+        def forward_expert(input_x, prob_x, expert_idx):
+            input_x = self.experts[expert_idx].forward(input_x)
+            input_x = input_x * prob_x
+            return input_x
+
+        x = [forward_expert(x[i], prob_gate[i], i) for i in range(self.num_experts)]
+        x = torch.vstack(x)
+        x = x[order.argsort(0)]  # restore original order
+        x = x.view(bsz, seq_len, dim)
+
+        return x, balance_loss, gate_load
+
+    def _forward_topk(self, x, attention_mask):
+        pass
 
     def _forward_gate_sentence(self, x, attention_mask):
         x_masked = x * attention_mask.unsqueeze(-1)
@@ -137,6 +180,9 @@ class MoELayer(nn.Module):
     def forward(self, x, input_ids, attention_mask):
         if self.route_method == "gate-token":
             x, balance_loss, gate_load = self._forward_gate_token(x)
+            # find the meaning of these functions, when is it used? and meaning of variables
+        elif self.route_method == "top-k":
+            x, balance_loss, gate_load = self._forward_topk(x, attention_mask)
         elif self.route_method == "gate-sentence":
             if x.size(0) == 1:
                 x, balance_loss, gate_load = self._forward_sentence_single_expert(x, attention_mask)
