@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .gates import GatesMapper
+#from .gates import GatesMapper
 
 
 class MoELayer(nn.Module):
@@ -20,7 +20,8 @@ class MoELayer(nn.Module):
         elif route_method == "hash-balance":
             self.hash_list = self._balance_hash_list(hash_list)
         elif route_method in ["topk", "dselectk", "soft_tree"]:
-            self.gate = GatesMapper[route_method](hidden_size, num_experts)
+            #self.gate = GatesMapper[route_method](hidden_size, num_experts)
+            pass
         else:
             raise KeyError("Routing method not supported.")
 

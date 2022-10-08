@@ -93,8 +93,11 @@ class SoftTreeGate(nn.Module):
 
         self.gamma = config["gamma"]
         self._z_initializer = nn.init.uniform_(-self.gamma / 100, self.gamma / 100)
-        self._w_initializer = nn.init.uniform_()
+        self._w_initializer = nn.init.uniform_(a = -0.05, b = 0.05)
         self.activation = SmoothStep(self.gamma)
+        
+        # TODO 
+        self.input_dim = config["input_dim"]
 
         self.entropy_reg = config["entropy_reg"]
         if "temperature" in config.keys():
@@ -108,7 +111,10 @@ class SoftTreeGate(nn.Module):
         self.exp_decay_mov_ave = config.get("exp_decay_mov_ave", 0.0)
 
         if not self.leaf:
-            self.selector_layer = nn.Linear(self.k, self.k)
+            self.selector_layer = nn.Linear(self.input_dim, self.nb_experts, bias=False)
+            self._z_initializer(self.selector_layer.weight)
+            self.selector_layer.bias.data.fill_(0.0)
+            
             self.left_child = SoftTreeGate(
                 config,
                 node_index=2 * node_index + 1,
@@ -126,24 +132,28 @@ class SoftTreeGate(nn.Module):
                 self.alpha_ave_past = nn.Parameter(self.alpha_ave_past_tensor, requires_grad=False)
 
         else:
-            self.output_layer = nn.Linear(self.k, self.nb_experts)
+            self.output_layer = nn.Linear(self.input_dim, self.nb_experts)
+            self._w_initializer(self.output_layer.weight)
+            self.output_layer.bias.data.fill_(0.0)
+            
 
     def _compute_balanced_split_loss(self, prob, current_prob):
         exp_decay_mov_ave = self.exp_decay_mov_ave * (1.0**self.depth_index)
 
         penalty = self.balanced_splitting_penalty / (1.0**self.depth_index)
 
-        alpha_ave_current = torch.sum(prob * current_prob, axis=0) / (
-            torch.sum(prob * torch.ones_like(current_prob), axis=0) + EPSILON
+        alpha_ave_current = torch.sum(prob * current_prob, dim=0) / (
+            torch.sum(prob * torch.ones_like(current_prob), dim=0) + EPSILON
         )
         alpha_ave = (
             1 - exp_decay_mov_ave
         ) * alpha_ave_current.float() + exp_decay_mov_ave * self.alpha_ave_past.float()
 
-        self.alpha_ave_past.assign(alpha_ave)
+
+        self.alpha_ave_past = nn.Parameter(alpha_ave, requires_grad=False)
 
         loss = -penalty * (0.5 * torch.log(alpha_ave + EPSILON) + 0.5 * torch.nn.math.log(1 - alpha_ave + EPSILON))
-        loss = torch.mean(loss, axis=-1)
+        loss = torch.mean(loss, dim=-1)
         loss = torch.sum(loss)
         #         print("===========bal-split loss:", loss)
         return loss
@@ -154,7 +164,7 @@ class SoftTreeGate(nn.Module):
         entropy_reg,
     ):
         # Entropy regularization is defined as: sum_{b \in batch_size} sum_{i \in [k]} -sum_{i=1}^n p_{bi}*log(p_{bi})
-        regularization = entropy_reg * torch.mean(torch.sum(-prob * torch.log(prob + EPSILON), axis=1))
+        regularization = entropy_reg * torch.mean(torch.sum(-prob * torch.log(prob + EPSILON), dim=1))
         return regularization
 
     def forward(self, inputs, training=True, prob=1.0):
@@ -168,7 +178,7 @@ class SoftTreeGate(nn.Module):
         h = [torch.unsqueeze(t, -1) for t in h]
 
         # h: (bs, dim_exp_i, nb_experts)
-        h = torch.concat(h, axis=2)
+        h = torch.concat(h, dim=2)
         
         print("h concat shape: ", h.shape)
 
@@ -180,27 +190,27 @@ class SoftTreeGate(nn.Module):
             s_left_child = self.left_child.forward(inputs, training=training, prob=current_prob * prob)
             s_right_child = self.right_child.forward(inputs, training=training, prob=(1 - current_prob) * prob)
             
-            s_bj = torch.concat([s_left_child, s_right_child], axis=-1)
+            s_bj = torch.concat([s_left_child, s_right_child], dim=-1)
 
             if self.node_index == 0: # root node
-                h = torch.unsqueeze(h, axis=2) 
+                h = torch.unsqueeze(h, dim=2) 
 
                 s_bj = torch.reshape(s_bj, shape=[torch.shape(s_bj)[0], -1])  # (b, k*nb_experts)
-                s_bj = torch.softmax(s_bj, axis=-1)  # (b, k*nb_experts)
+                s_bj = torch.softmax(s_bj, dim=-1)  # (b, k*nb_experts)
                 
                 w_concat = torch.reshape(
                     s_bj, shape=[torch.shape(s_bj)[0], self.k, self.nb_experts]
                 )  # (b, k, nb_experts)
-                w_concat = torch.unsqueeze(w_concat, axis=1)  # (b, 1, k, nb_experts)
+                w_concat = torch.unsqueeze(w_concat, dim=1)  # (b, 1, k, nb_experts)
 
                 # w_concat: (b, 1, k, nb_experts), perm_mask: [k, nb_experts, nb_experts]
 
                 w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, permutation_weights)
-                w_permuted = torch.sum(w_permuted, axis=2, keepdims=True)  # (b, 1, 1, nb_experts)
-                w_permuted = w_permuted / torch.sum(w_permuted, axis=-1, keepdims=True)  # (b, 1, 1, nb_experts)
+                w_permuted = torch.sum(w_permuted, dim=2, keepdim=True)  # (b, 1, 1, nb_experts)
+                w_permuted = w_permuted / torch.sum(w_permuted, dim=-1, keepdim=True)  # (b, 1, 1, nb_experts)
 
                 # h:(b, dim_exp_i, 1, nb_experts) * w_permuted: (b, 1, 1, nb_experts)
-                y_agg = torch.sum(h * w_permuted, axis=[2, 3])  # (b, dim_exp_i, 1, nb_experts) -> (b, dim_exp_i)
+                y_agg = torch.sum(h * w_permuted, dim=[2, 3])  # (b, dim_exp_i, 1, nb_experts) -> (b, dim_exp_i)
 
                 # Compute s_bj
                 s_concat = torch.where(
@@ -208,29 +218,29 @@ class SoftTreeGate(nn.Module):
                     torch.ones_like(w_permuted),
                     torch.zeros_like(w_permuted),
                 )  # (b, 1, 1, nb_experts)
-                s_avg = torch.mean(s_concat, axis=-1)  # (b, 1, 1)
+                s_avg = torch.mean(s_concat, dim=-1)  # (b, 1, 1)
 
                 avg_sparsity = torch.mean(s_avg)  # average over batch
 
-                soft_averages = torch.mean(w_permuted, axis=[0, 1, 2])  # (nb_experts,)
-                hard_averages = torch.mean(torch.ones_like(s_concat) - s_concat, axis=[0, 1, 2])  # (nb_experts,)
+                soft_averages = torch.mean(w_permuted, dim=[0, 1, 2])  # (nb_experts,)
+                hard_averages = torch.mean(torch.ones_like(s_concat) - s_concat, dim=[0, 1, 2])  # (nb_experts,)
                 
                 '''soft_averages_for_all_experts_list = torch.split(torch.reshape(soft_averages, [-1]), self.nb_experts)
                 hard_averages_for_all_experts_list = torch.split(torch.reshape(hard_averages, [-1]), self.nb_experts)
                 #                    [self.add_metric(le, name='hard_averages_for_task_{}_for_expert_{}'.format(self.task+1, j)) for j, le in enumerate(hard_averages_for_all_experts_list)]
 
                 simplex_constraint = torch.mean(
-                    torch.sum(w_permuted, axis=-1),
+                    torch.sum(w_permuted, dim=-1),
                 )
 
-                simplex_constraint_fails = torch.sum(torch.sum(w_permuted, axis=-1), axis=[1, 2])  # (b, )
+                simplex_constraint_fails = torch.sum(torch.sum(w_permuted, dim=-1), dim=[1, 2])  # (b, )
 
                 simplex_constraint_fails = torch.where(
                     torch.less(simplex_constraint_fails, 1.0 - 1e-5),
                     torch.ones_like(simplex_constraint_fails),
                     torch.zeros_like(simplex_constraint_fails),
                 )  # (b, )
-                simplex_constraint_fails = torch.mean(simplex_constraint_fails, axis=0)'''
+                simplex_constraint_fails = torch.mean(simplex_constraint_fails, dim=0)'''
 
                 return y_agg, soft_averages, hard_averages
             else:
@@ -240,8 +250,8 @@ class SoftTreeGate(nn.Module):
             # Computing a_bij,    a_bij shape = (b, k)
             a_bij = self.output_layer(x)  # (b, k) # Note we do not have access to j as j represents leaves
 
-            prob = torch.unsqueeze(prob, axis=-1)  # (b, k, 1)
-            a_bij = torch.unsqueeze(a_bij, axis=-1)  # (b, k, 1)
+            prob = torch.unsqueeze(prob, dim=-1)  # (b, k, 1)
+            a_bij = torch.unsqueeze(a_bij, dim=-1)  # (b, k, 1)
             
             log_prob = torch.where(
                 torch.equal(prob, torch.constant(0.0)),
@@ -249,8 +259,8 @@ class SoftTreeGate(nn.Module):
                 # torch.math.log(prob+torch.experimental.numpy.finfo(torch.float32).eps)
                 torch.log(prob + 1e-6),
             )
-            #                s_bj = torch.reduce_logsumexp(a_bij+log_prob, axis=-1, keepdims=True) # (b, 1)
-            #                s_bj_sp = torch.reduce_logsumexp(a_bij+torch.math.log(prob),axis=-1,keepdims=True)
+            #                s_bj = torch.reduce_logsumexp(a_bij+log_prob, dim=-1, keepdim=True) # (b, 1)
+            #                s_bj_sp = torch.reduce_logsumexp(a_bij+torch.math.log(prob),dim=-1,keepdim=True)
             s_bj = a_bij + log_prob  # (b, k, 1)
 
             return s_bj  # ,s_bj_sp
