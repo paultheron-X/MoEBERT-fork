@@ -1,10 +1,10 @@
-export num_gpus=8
+export num_gpus=3
 export CUBLAS_WORKSPACE_CONFIG=":16:8" # https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
 export PYTHONHASHSEED=0
-export output_dir="mnli"
+export output_dir="../../paultheron/results"
 python -m torch.distributed.launch --nproc_per_node=$num_gpus \
 examples/text-classification/run_glue.py \
---model_name_or_path [path-to-finetuned-model] \
+--model_name_or_path "../../paultheron/results/model_bert_full" \
 --task_name mnli \
 --do_train \
 --do_eval \
@@ -12,13 +12,13 @@ examples/text-classification/run_glue.py \
 --per_device_train_batch_size 8 \
 --learning_rate 5e-5 \
 --num_train_epochs 5 \
---output_dir $output_dir/model \
+--output_dir $output_dir/model_bert_full_moe \
 --overwrite_output_dir \
 --logging_steps 20 \
 --logging_dir $output_dir/log \
 --report_to tensorboard \
 --evaluation_strategy steps \
---eval_steps 500 \
+--eval_steps 2000 \
 --save_strategy no \
 --warmup_ratio 0.0 \
 --seed 0 \
@@ -30,6 +30,6 @@ examples/text-classification/run_glue.py \
 --moebert_expert_dim 768 \
 --moebert_expert_dropout 0.1 \
 --moebert_load_balance 0.0 \
---moebert_load_importance importance_files/importance_mnli.pkl \
+--moebert_load_importance importance.pkl \
 --moebert_route_method hash-random \
 --moebert_share_importance 512 \

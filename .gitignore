@@ -1,0 +1,4 @@
+*.sh
+*.ipynb
+imp_files_backup/*
+*.pkl
