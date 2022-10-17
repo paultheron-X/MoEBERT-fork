@@ -1,0 +1,4 @@
+*.pyc
+*.egg-info
+results/*
+mnli/log
