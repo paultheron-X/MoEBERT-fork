@@ -227,8 +227,9 @@ class SoftTreeGate(nn.Module):
                 w_concat = torch.unsqueeze(w_concat, dim=1)  # (b, 1, k, nb_experts)
 
                 # w_concat: (b, 1, k, nb_experts), perm_mask: [k, nb_experts, nb_experts]
+                
 
-                w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, self.permutation_mask)
+                w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, self.permutation_mask.to(w_concat.device))
                 w_permuted = torch.sum(w_permuted, dim=2, keepdim=True)  # (b, 1, 1, nb_experts)
                 w_permuted = w_permuted / torch.sum(w_permuted, dim=-1, keepdim=True)  # (b, 1, 1, nb_experts)
 
@@ -243,7 +244,7 @@ class SoftTreeGate(nn.Module):
                 )  # (b, 1, 1, nb_experts)
                 s_avg = torch.mean(s_concat, dim=-1)  # (b, 1, 1)
                 
-                print(s_concat.shape)
+                #print(s_concat.shape)
 
                 avg_sparsity = torch.mean(s_avg)  # average over batch
                 
