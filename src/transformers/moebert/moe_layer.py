@@ -4,8 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# from .gates import GatesMapper
-
 from .gates.soft_tree import SoftTreeGate
 
 
@@ -94,7 +92,7 @@ class MoELayer(nn.Module):
             input_x = self.experts[expert_idx].forward(input_x)
             return input_x
 
-        h = [forward_expert(x, i) for i in range(self.num_experts)]
+        h = [forward_expert(x[i], i) for i in range(self.num_experts)]
 
         # pass the hidden states to the gate
         y_agg, soft_averages, hard_averages, s_concat = self.gate.forward((h, x))

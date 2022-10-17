@@ -228,7 +228,6 @@ class SoftTreeGate(nn.Module):
 
                 # w_concat: (b, 1, k, nb_experts), perm_mask: [k, nb_experts, nb_experts]
                 
-
                 w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, self.permutation_mask.to(w_concat.device))
                 w_permuted = torch.sum(w_permuted, dim=2, keepdim=True)  # (b, 1, 1, nb_experts)
                 w_permuted = w_permuted / torch.sum(w_permuted, dim=-1, keepdim=True)  # (b, 1, 1, nb_experts)
@@ -267,7 +266,7 @@ class SoftTreeGate(nn.Module):
             a_bij = torch.unsqueeze(a_bij, dim=-1)  # (b, k, 1)
             
             log_prob = torch.where(
-                prob < 1e-7, torch.ones_like(prob) * -1e5, torch.log(prob)
+                prob < 1e-5, -torch.ones_like(prob) * torch.inf, torch.log(prob + + 1e-6 )
             )
             #                s_bj = torch.reduce_logsumexp(a_bij+log_prob, dim=-1, keepdim=True) # (b, 1)
             #                s_bj_sp = torch.reduce_logsumexp(a_bij+torch.math.log(prob),dim=-1,keepdim=True)
