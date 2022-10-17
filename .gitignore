@@ -2,3 +2,7 @@
 *.ipynb
 imp_files_backup/*
 *.pkl
+*.pyc
+*.egg-info
+results/*
+mnli/log
