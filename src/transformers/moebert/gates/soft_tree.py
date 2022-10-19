@@ -92,10 +92,9 @@ class SoftTreeGate(nn.Module):
         #         assert self.nb_experts == 2**self.max_depth # to check number of experts is a power of 2
 
         self.gamma = config["gamma"]
-        
-        
+
         self.activation = SmoothStep(self.gamma)
-        
+
         self.input_dim = config["input_dim"]
 
         self.entropy_reg = config["entropy_reg"]
@@ -107,7 +106,7 @@ class SoftTreeGate(nn.Module):
         if not self.leaf:
             self.selector_layer = nn.Linear(self.input_dim, self.k, bias=False)
             self.selector_layer.weight = self._z_initializer(self.selector_layer.weight)
-            
+
             self.left_child = SoftTreeGate(
                 config,
                 node_index=2 * node_index + 1,
@@ -128,17 +127,24 @@ class SoftTreeGate(nn.Module):
             self.output_layer = nn.Linear(self.input_dim, self.k)
             self.output_layer.weight = self._w_initializer(self.output_layer.weight)
             self.output_layer.bias.data.fill_(0.0)
-        
-        if self.node_index==0:
-            self.permutation_mask = torch.tensor(np.array([np.identity(self.nb_experts)[np.random.permutation(np.arange(self.nb_experts)),:] for _ in range(self.k)]), dtype=torch.float32)
-    
-    def _z_initializer(self, x):
-        return nn.init.uniform_(x, -self.gamma / 100, self.gamma / 100)      
-    
-    def _w_initializer(self, x):
-       return nn.init.uniform_(x, a = -0.05, b = 0.05)  
 
-    
+        if self.node_index == 0:
+            self.permutation_mask = torch.tensor(
+                np.array(
+                    [
+                        np.identity(self.nb_experts)[np.random.permutation(np.arange(self.nb_experts)), :]
+                        for _ in range(self.k)
+                    ]
+                ),
+                dtype=torch.float32,
+            )
+
+    def _z_initializer(self, x):
+        return nn.init.uniform_(x, -self.gamma / 100, self.gamma / 100)
+
+    def _w_initializer(self, x):
+        return nn.init.uniform_(x, a=-0.05, b=0.05)
+
     def _compute_balanced_split_loss(self, prob, current_prob):
         exp_decay_mov_ave = self.exp_decay_mov_ave * (1.0**self.depth_index)
 
@@ -150,7 +156,6 @@ class SoftTreeGate(nn.Module):
         alpha_ave = (
             1 - exp_decay_mov_ave
         ) * alpha_ave_current.float() + exp_decay_mov_ave * self.alpha_ave_past.float()
-
 
         self.alpha_ave_past = nn.Parameter(alpha_ave, requires_grad=False)
 
@@ -167,12 +172,15 @@ class SoftTreeGate(nn.Module):
     ):
         # Entropy regularization is defined as: sum_{b \in batch_size} sum_{i \in [k]} -sum_{i=1}^n p_{bi}*log(p_{bi})
         regularization = entropy_reg * torch.mean(torch.sum(-prob * torch.log(prob + EPSILON), dim=1))
+        if regularization.isnan():
+            regularization = torch.tensor(0.0, dtype=torch.float32)
+        print("===========entropy_reg loss:", regularization)
         return regularization
 
     def forward(self, inputs, training=True, prob=1.0):
         ##print(inputs)
 
-        #h, x, permutation_weights = inputs 
+        # h, x, permutation_weights = inputs
         h, x = inputs
 
         # #print("\ninput of softmax gate: ",len(h), h[0].shape, x.shape)
@@ -183,46 +191,47 @@ class SoftTreeGate(nn.Module):
 
         # h: (bs, dim_exp_i, nb_experts)
         h = torch.concat(h, dim=2)
-        
-        #print("h concat shape: ", h.shape)
+
+        # print("h concat shape: ", h.shape)
 
         if not self.leaf:
-            #print('hi')
+            # print('hi')
             # shape = (batch_size, k)
             current_prob = self.selector_layer(x)  # (batch_size, k)
             current_prob = self.activation.forward(current_prob)  # (batch_size, k)
-            
-            s_left_child, regularization_loss = self.left_child.forward(inputs, training=training, prob=current_prob * prob)
-            s_right_child, regularization_loss = self.right_child.forward(inputs, training=training, prob=(1 - current_prob) * prob)
-            
-            #print("s_left_child: ", s_left_child.shape)
-            #print("s_right_child: ", s_right_child.shape)
-            
+
+            s_left_child, regularization_loss = self.left_child.forward(
+                inputs, training=training, prob=current_prob * prob
+            )
+            s_right_child, regularization_loss = self.right_child.forward(
+                inputs, training=training, prob=(1 - current_prob) * prob
+            )
+
+            # print("s_left_child: ", s_left_child.shape)
+            # print("s_right_child: ", s_right_child.shape)
+
             s_bj = torch.cat([s_left_child, s_right_child], dim=2)
-            
-            if self.node_index == 0: # root node
-                #print('Using root node routing')
 
-                #print('test s bj', s_bj.shape)
+            if self.node_index == 0:  # root node
+                # print('Using root node routing')
 
-                #print('h.shape@', h.shape)
-                h = torch.unsqueeze(h, dim=2) 
-                #print('h.shape@', h.shape)
+                # print('test s bj', s_bj.shape)
 
+                # print('h.shape@', h.shape)
+                h = torch.unsqueeze(h, dim=2)
+                # print('h.shape@', h.shape)
 
                 s_bj = torch.reshape(s_bj, shape=[s_bj.shape[0], -1])  # (b, k*nb_experts)
                 s_bj = torch.softmax(s_bj, dim=-1)  # (b, k*nb_experts)
-                
-                #print("s_bj shape: ", s_bj.shape)
-                #print(s_bj)
-                
-                w_concat = torch.reshape(
-                    s_bj, shape=[s_bj.shape[0], self.k, self.nb_experts]
-                )  # (b, k, nb_experts)
+
+                # print("s_bj shape: ", s_bj.shape)
+                # print(s_bj)
+
+                w_concat = torch.reshape(s_bj, shape=[s_bj.shape[0], self.k, self.nb_experts])  # (b, k, nb_experts)
                 w_concat = torch.unsqueeze(w_concat, dim=1)  # (b, 1, k, nb_experts)
 
                 # w_concat: (b, 1, k, nb_experts), perm_mask: [k, nb_experts, nb_experts]
-                
+
                 w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, self.permutation_mask.to(w_concat.device))
                 w_permuted = torch.sum(w_permuted, dim=2, keepdim=True)  # (b, 1, 1, nb_experts)
                 w_permuted = w_permuted / torch.sum(w_permuted, dim=-1, keepdim=True)  # (b, 1, 1, nb_experts)
@@ -237,41 +246,42 @@ class SoftTreeGate(nn.Module):
                     torch.zeros_like(w_permuted),
                 )  # (b, 1, 1, nb_experts)
                 s_avg = torch.mean(s_concat, dim=-1)  # (b, 1, 1)
-                
-                #print(s_concat.shape)
+
+                # print(s_concat.shape)
 
                 avg_sparsity = torch.mean(s_avg)  # average over batch
-                
 
                 soft_averages = torch.mean(w_permuted, dim=[0, 1, 2])  # (nb_experts,)
                 hard_averages = torch.mean(torch.ones_like(s_concat) - s_concat, dim=[0, 1, 2])  # (nb_experts,)
-                
-            
-                return y_agg, soft_averages, hard_averages, s_concat, regularization_loss # For root node, return the aggregated output and the sparsity of the weights, and the sparsity of the weights for each expert
+
+                return (
+                    y_agg,
+                    soft_averages,
+                    hard_averages,
+                    s_concat,
+                    regularization_loss,
+                )  # For root node, return the aggregated output and the sparsity of the weights, and the sparsity of the weights for each expert
             else:
-                #print('Using internal node routing')
+                # print('Using internal node routing')
                 return s_bj, regularization_loss
         else:
-            #print('Using leaf node routing')
+            # print('Using leaf node routing')
             # prob's shape = (b, k)
             # Computing a_bij,    a_bij shape = (b, k)
             a_bij = self.output_layer(x)  # (b, k) # Note we do not have access to j as j represents leaves
 
             prob = torch.unsqueeze(prob, dim=-1)  # (b, k, 1)
             a_bij = torch.unsqueeze(a_bij, dim=-1)  # (b, k, 1)
-            
-            log_prob = torch.where(
-                prob < 1e-5, -torch.ones_like(prob) * torch.inf, torch.log(prob + + 1e-6 )
-            )
+
+            log_prob = torch.where(prob < 1e-5, -torch.ones_like(prob) * torch.inf, torch.log(prob + +1e-6))
             #                s_bj = torch.reduce_logsumexp(a_bij+log_prob, dim=-1, keepdim=True) # (b, 1)
             #                s_bj_sp = torch.reduce_logsumexp(a_bij+torch.math.log(prob),dim=-1,keepdim=True)
             s_bj = a_bij + log_prob  # (b, k, 1)
-            
+
             if training:
                 regularization_loss = self._compute_entropy_regularization_per_expert(prob, self.entropy_reg)
             else:
-                regularization_loss = torch.zeros_like(prob)
-            
+                regularization_loss = torch.zero_()
 
             return s_bj, regularization_loss  # , s_bj_sp
 
@@ -282,17 +292,15 @@ if __name__ == "__main__":
         "nb_experts": 4,
         "gamma": 1.0,
         "k": 2,
-        "task" : "classification",
+        "task": "classification",
         "z_initializer": None,
         "w_initializer": None,
         "entropy_reg": 1,
     }
     s = SoftTreeGate(config)
-    
-    h = [
-        np.random.random((8, 10)) for _ in range(config["nb_experts"])
-    ]
+
+    h = [np.random.random((8, 10)) for _ in range(config["nb_experts"])]
     x = np.random.random((8, 5))
     y = s([h, x])
-    #print(y)
-    #print(y.shape)        
+    # print(y)
+    # print(y.shape)

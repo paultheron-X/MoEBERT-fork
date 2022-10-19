@@ -107,6 +107,7 @@ class MoELayer(nn.Module):
         # print("hard_averages", hard_averages)
 
         x = y_agg.view(bsz, seq_len, dim)
+        
 
         return x, regularization_loss, s_concat
 
