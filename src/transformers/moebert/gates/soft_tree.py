@@ -127,6 +127,15 @@ class SoftTreeGate(nn.Module):
             self.output_layer = nn.Linear(self.input_dim, self.k)
             self.output_layer.weight = self._w_initializer(self.output_layer.weight)
             self.output_layer.bias.data.fill_(0.0)
+        
+        if self.node_index==0:
+            self.permutation_mask = torch.tensor(np.array([np.identity(self.nb_experts)[np.random.permutation(np.arange(self.nb_experts)),:] for _ in range(self.k)]), dtype=torch.float32)
+    
+    def _z_initializer(self, x):
+        return nn.init.uniform_(x, -self.gamma / 100, self.gamma / 100)      
+    
+    def _w_initializer(self, x):
+        return nn.init.uniform_(x, a = -0.05, b = 0.05)  
 
         if self.node_index == 0:
             self.permutation_mask = torch.tensor(
@@ -179,6 +188,7 @@ class SoftTreeGate(nn.Module):
 
     def forward(self, inputs, training=True, prob=1.0):
         ##print(inputs)
+        regularization_loss = 0.0
 
         # h, x, permutation_weights = inputs
         h, x = inputs
@@ -281,7 +291,8 @@ class SoftTreeGate(nn.Module):
             if training:
                 regularization_loss = self._compute_entropy_regularization_per_expert(prob, self.entropy_reg)
             else:
-                regularization_loss = torch.zero_()
+                regularization_loss = 0.0
+            
 
             return s_bj, regularization_loss  # , s_bj_sp
 
@@ -302,5 +313,5 @@ if __name__ == "__main__":
     h = [np.random.random((8, 10)) for _ in range(config["nb_experts"])]
     x = np.random.random((8, 5))
     y = s([h, x])
-    # print(y)
-    # print(y.shape)
+    #print(y)
+    #print(y.shape)        
