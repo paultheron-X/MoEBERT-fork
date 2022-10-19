@@ -136,7 +136,7 @@ class SoftTreeGate(nn.Module):
         return nn.init.uniform_(x, -self.gamma / 100, self.gamma / 100)      
     
     def _w_initializer(self, x):
-       return nn.init.uniform_(x, a = -0.05, b = 0.05)  
+        return nn.init.uniform_(x, a = -0.05, b = 0.05)  
 
     
     def _compute_balanced_split_loss(self, prob, current_prob):
@@ -167,10 +167,14 @@ class SoftTreeGate(nn.Module):
     ):
         # Entropy regularization is defined as: sum_{b \in batch_size} sum_{i \in [k]} -sum_{i=1}^n p_{bi}*log(p_{bi})
         regularization = entropy_reg * torch.mean(torch.sum(-prob * torch.log(prob + EPSILON), dim=1))
+        if regularization.isnan():
+            regularization = torch.tensor(0.0, dtype=torch.float32)
+
         return regularization
 
     def forward(self, inputs, training=True, prob=1.0):
         ##print(inputs)
+        regularization_loss = 0.0
 
         #h, x, permutation_weights = inputs 
         h, x = inputs
@@ -270,7 +274,7 @@ class SoftTreeGate(nn.Module):
             if training:
                 regularization_loss = self._compute_entropy_regularization_per_expert(prob, self.entropy_reg)
             else:
-                regularization_loss = torch.zeros_like(prob)
+                regularization_loss = 0.0
             
 
             return s_bj, regularization_loss  # , s_bj_sp
