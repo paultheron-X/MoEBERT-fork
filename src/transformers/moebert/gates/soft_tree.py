@@ -99,11 +99,6 @@ class SoftTreeGate(nn.Module):
         self.input_dim = config["input_dim"]
 
         self.entropy_reg = config["entropy_reg"]
-        if "temperature" in config.keys():
-            self.iterations = 0
-            self.temperature = torch.tensor(config["temperature"], dtype=torch.float32)
-        else:
-            self.temperature = None
 
         self.balanced_splitting = config.get("balanced_splitting", False)
         self.balanced_splitting_penalty = config.get("balanced_splitting_penalty", 0.0)
@@ -197,8 +192,8 @@ class SoftTreeGate(nn.Module):
             current_prob = self.selector_layer(x)  # (batch_size, k)
             current_prob = self.activation.forward(current_prob)  # (batch_size, k)
             
-            s_left_child = self.left_child.forward(inputs, training=training, prob=current_prob * prob)
-            s_right_child = self.right_child.forward(inputs, training=training, prob=(1 - current_prob) * prob)
+            s_left_child, regularization_loss = self.left_child.forward(inputs, training=training, prob=current_prob * prob)
+            s_right_child, regularization_loss = self.right_child.forward(inputs, training=training, prob=(1 - current_prob) * prob)
             
             #print("s_left_child: ", s_left_child.shape)
             #print("s_right_child: ", s_right_child.shape)
@@ -252,10 +247,10 @@ class SoftTreeGate(nn.Module):
                 hard_averages = torch.mean(torch.ones_like(s_concat) - s_concat, dim=[0, 1, 2])  # (nb_experts,)
                 
             
-                return y_agg, soft_averages, hard_averages, s_concat # For root node, return the aggregated output and the sparsity of the weights, and the sparsity of the weights for each expert
+                return y_agg, soft_averages, hard_averages, s_concat, regularization_loss # For root node, return the aggregated output and the sparsity of the weights, and the sparsity of the weights for each expert
             else:
                 #print('Using internal node routing')
-                return s_bj  # , s_bj_sp
+                return s_bj, regularization_loss
         else:
             #print('Using leaf node routing')
             # prob's shape = (b, k)
@@ -271,8 +266,14 @@ class SoftTreeGate(nn.Module):
             #                s_bj = torch.reduce_logsumexp(a_bij+log_prob, dim=-1, keepdim=True) # (b, 1)
             #                s_bj_sp = torch.reduce_logsumexp(a_bij+torch.math.log(prob),dim=-1,keepdim=True)
             s_bj = a_bij + log_prob  # (b, k, 1)
+            
+            if training:
+                regularization_loss = self._compute_entropy_regularization_per_expert(prob, self.entropy_reg)
+            else:
+                regularization_loss = torch.zeros_like(prob)
+            
 
-            return s_bj  # ,s_bj_sp
+            return s_bj, regularization_loss  # , s_bj_sp
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import copy
 import pickle
+import re
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,10 +24,11 @@ class MoELayer(nn.Module):
             config = {
                 "k": 2,
                 "nb_experts": 4,
-                "gamma": 0.1,
+                "gamma": 0.1, # gamma = [0.01, 0.1, 1]
                 "input_dim": hidden_size,
-                "entropy_reg": 10,
                 "temperature": 1.0,
+                "entropy_reg": 1e-3, # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
+                #"temperature": 1.0, 
             }
             self.gate = SoftTreeGate(config)
             pass
@@ -95,7 +97,7 @@ class MoELayer(nn.Module):
         h = [forward_expert(x, i) for i in range(self.num_experts)]
 
         # pass the hidden states to the gate
-        y_agg, soft_averages, hard_averages, s_concat = self.gate.forward((h, x))
+        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x))
         # print("y_agg", y_agg.shape)
         # print("soft_averages", soft_averages.shape)
         # print("hard_averages", hard_averages.shape)
@@ -106,7 +108,7 @@ class MoELayer(nn.Module):
 
         x = y_agg.view(bsz, seq_len, dim)
 
-        return x, 0.0, s_concat
+        return x, regularization_loss, s_concat
 
     def _forward_soft_tree_gate_sentence(self, x, attention_mask):
         x_masked = x * attention_mask.unsqueeze(-1)
