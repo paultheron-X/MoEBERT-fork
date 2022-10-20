@@ -7,6 +7,8 @@ import math
 
 EPSILON = 1e-6
 
+torch.autograd.set_detect_anomaly(True)
+
 
 class SmoothStep(nn.Module):
     """A smooth-step function.
@@ -180,10 +182,19 @@ class SoftTreeGate(nn.Module):
         entropy_reg,
     ):
         # Entropy regularization is defined as: sum_{b \in batch_size} sum_{i \in [k]} -sum_{i=1}^n p_{bi}*log(p_{bi})
-        regularization = entropy_reg * torch.mean(torch.sum(-prob * torch.log(prob + EPSILON), dim=1))
-        if regularization.isnan():
-            regularization = torch.tensor(0.0, dtype=torch.float32)
-        print("===========entropy_reg loss:", regularization)
+        print('#############')
+        print('prob', prob)
+        print('--')
+        print('reg', entropy_reg)
+        print('--')
+        print('log', torch.log(prob + EPSILON))
+        print('--')
+        regularization = entropy_reg * torch.mean(torch.sum(-(prob + EPSILON) * torch.log(prob + EPSILON), dim=1))
+        print('--')
+        print('reg', regularization)
+        #if regularization.isnan():
+         #   regularization = torch.tensor(0.0, dtype=torch.float32)
+        #print("===========entropy_reg loss:", regularization)
         return regularization
 
     def forward(self, inputs, training=True, prob=1.0):

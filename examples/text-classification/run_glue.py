@@ -221,6 +221,14 @@ class ModelArguments:
         default=512,
         metadata={"help": "Amount of neurons to share across experts."}
     )
+    moebert_gate_gammma: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of gamma to use in the soft trees gating mechanism."}
+    )
+    moebert_gate_entropy: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of entropy to use in the entropy regularizer for gating."}
+    )
     apply_lora: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to apply LoRA or not."},
