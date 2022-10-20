@@ -9,7 +9,7 @@ from .gates.soft_tree import SoftTreeGate
 
 
 class MoELayer(nn.Module):
-    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list):
+    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list, gamma, entropy_reg):
         nn.Module.__init__(self)
         self.num_experts = num_experts
         self.experts = nn.ModuleList([copy.deepcopy(expert) for i in range(num_experts)])
@@ -24,10 +24,10 @@ class MoELayer(nn.Module):
             config = {
                 "k": 2,
                 "nb_experts": 4,
-                "gamma": 0.1, # gamma = [0.01, 0.1, 1]
+                "gamma": gamma, # gamma = [0.01, 0.1, 1]
                 "input_dim": hidden_size,
                 "temperature": 1.0,
-                "entropy_reg": 1e-3, # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
+                "entropy_reg": entropy_reg, # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
                 #"temperature": 1.0, 
             }
             self.gate = SoftTreeGate(config)

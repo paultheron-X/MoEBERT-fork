@@ -66,6 +66,8 @@ class MoEBertLayer(BertLayer):
                 route_method=config.moebert_route_method,
                 vocab_size=config.vocab_size,
                 hash_list=config.moebert_route_hash_list,
+                gamma=config.moebert_gate_gamma,
+                entropy_reg=config.moebert_gate_entropy,
             )
             self.importance_processor = ImportanceProcessor(config, layer_idx, config.moebert_expert_num, 0)
         else:
