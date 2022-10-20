@@ -221,7 +221,7 @@ class ModelArguments:
         default=512,
         metadata={"help": "Amount of neurons to share across experts."}
     )
-    moebert_gate_gammma: Optional[float] = field(
+    moebert_gate_gamma: Optional[float] = field(
         default=1,
         metadata={"help": "value of gamma to use in the soft trees gating mechanism."}
     )
