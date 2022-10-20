@@ -178,7 +178,7 @@ class SoftTreeGate(nn.Module):
         print("--")
         print("reg", regularization)
         if regularization.isnan():
-            quit()
+            #quit()
             regularization = torch.tensor(0.0, dtype=torch.float32)
         # print("===========entropy_reg loss:", regularization)
         return regularization
@@ -288,10 +288,10 @@ class SoftTreeGate(nn.Module):
             s_bj = a_bij + log_prob  # (b, k, 1)
 
             if training:
-                regularization_loss = 0.0
-                """regularization_loss = self._compute_entropy_rdegularization_per_expert(
+                #regularization_loss = 0.0
+                regularization_loss = self._compute_entropy_rdegularization_per_expert(
                     prob, entropy_reg=self.entropy_reg
-                )"""
+                )
             else:
                 regularization_loss = 0.0
 
