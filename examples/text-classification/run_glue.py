@@ -434,6 +434,9 @@ def main():
     config.moebert_route_hash_list = model_args.moebert_route_hash_list
     config.moebert_route_method = model_args.moebert_route_method
     config.moebert_share_importance = model_args.moebert_share_importance
+    config.moebert_gate_gamma = model_args.moebert_gate_gamma
+    config.moebert_gate_entropy = model_args.moebert_gate_entropy
+    
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
