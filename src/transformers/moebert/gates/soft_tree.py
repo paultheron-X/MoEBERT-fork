@@ -7,7 +7,7 @@ import math
 
 EPSILON = 1e-6
 
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 
 
 class SmoothStep(nn.Module):
@@ -129,25 +129,10 @@ class SoftTreeGate(nn.Module):
             self.output_layer = nn.Linear(self.input_dim, self.k)
             self.output_layer.weight = self._w_initializer(self.output_layer.weight)
             self.output_layer.bias.data.fill_(0.0)
-        
-        if self.node_index==0:
-            self.permutation_mask = torch.tensor(np.array([np.identity(self.nb_experts)[np.random.permutation(np.arange(self.nb_experts)),:] for _ in range(self.k)]), dtype=torch.float32)
-    
-    def _z_initializer(self, x):
-        return nn.init.uniform_(x, -self.gamma / 100, self.gamma / 100)      
-    
-    def _w_initializer(self, x):
-        return nn.init.uniform_(x, a = -0.05, b = 0.05)  
 
         if self.node_index == 0:
             self.permutation_mask = torch.tensor(
-                np.array(
-                    [
-                        np.identity(self.nb_experts)[np.random.permutation(np.arange(self.nb_experts)), :]
-                        for _ in range(self.k)
-                    ]
-                ),
-                dtype=torch.float32,
+                np.array([np.identity(self.nb_experts) for _ in range(self.k)]), dtype=torch.float32
             )
 
     def _z_initializer(self, x):
@@ -176,25 +161,26 @@ class SoftTreeGate(nn.Module):
         #         #print("===========bal-split loss:", loss)
         return loss
 
-    def _compute_entropy_regularization_per_expert(
+    def _compute_entropy_rdegularization_per_expert(
         self,
         prob,
         entropy_reg,
     ):
         # Entropy regularization is defined as: sum_{b \in batch_size} sum_{i \in [k]} -sum_{i=1}^n p_{bi}*log(p_{bi})
-        print('#############')
-        print('prob', prob)
-        print('--')
-        print('reg', entropy_reg)
-        print('--')
-        print('log', torch.log(prob + EPSILON))
-        print('--')
+        print("##############")
+        print("prob", prob)
+        print("--")
+        print("reg", entropy_reg)
+        print("--")
+        print("log", torch.log(prob + EPSILON))
+        print("--")
         regularization = entropy_reg * torch.mean(torch.sum(-(prob + EPSILON) * torch.log(prob + EPSILON), dim=1))
-        print('--')
-        print('reg', regularization)
-        #if regularization.isnan():
-         #   regularization = torch.tensor(0.0, dtype=torch.float32)
-        #print("===========entropy_reg loss:", regularization)
+        print("--")
+        print("reg", regularization)
+        if regularization.isnan():
+            quit()
+            regularization = torch.tensor(0.0, dtype=torch.float32)
+        # print("===========entropy_reg loss:", regularization)
         return regularization
 
     def forward(self, inputs, training=True, prob=1.0):
@@ -221,12 +207,14 @@ class SoftTreeGate(nn.Module):
             current_prob = self.selector_layer(x)  # (batch_size, k)
             current_prob = self.activation.forward(current_prob)  # (batch_size, k)
 
-            s_left_child, regularization_loss = self.left_child.forward(
+            s_left_child, regularization_loss_left = self.left_child.forward(
                 inputs, training=training, prob=current_prob * prob
             )
-            s_right_child, regularization_loss = self.right_child.forward(
+            s_right_child, regularization_loss_right = self.right_child.forward(
                 inputs, training=training, prob=(1 - current_prob) * prob
             )
+
+            regularization_loss = regularization_loss_left + regularization_loss_right
 
             # print("s_left_child: ", s_left_child.shape)
             # print("s_right_child: ", s_right_child.shape)
@@ -300,10 +288,12 @@ class SoftTreeGate(nn.Module):
             s_bj = a_bij + log_prob  # (b, k, 1)
 
             if training:
-                regularization_loss = self._compute_entropy_regularization_per_expert(prob, self.entropy_reg)
+                regularization_loss = 0.0
+                """regularization_loss = self._compute_entropy_rdegularization_per_expert(
+                    prob, entropy_reg=self.entropy_reg
+                )"""
             else:
                 regularization_loss = 0.0
-            
 
             return s_bj, regularization_loss  # , s_bj_sp
 
@@ -324,5 +314,5 @@ if __name__ == "__main__":
     h = [np.random.random((8, 10)) for _ in range(config["nb_experts"])]
     x = np.random.random((8, 5))
     y = s([h, x])
-    #print(y)
-    #print(y.shape)        
+    # print(y)
+    # print(y.shape)
