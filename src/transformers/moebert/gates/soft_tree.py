@@ -167,20 +167,20 @@ class SoftTreeGate(nn.Module):
         entropy_reg,
     ):
         # Entropy regularization is defined as: sum_{b \in batch_size} sum_{i \in [k]} -sum_{i=1}^n p_{bi}*log(p_{bi})
-        print("##############")
-        print("prob", prob)
-        print("--")
-        print("reg", entropy_reg)
-        print("--")
-        print("log", torch.log(prob + EPSILON))
-        print("--")
+        #print("##############")
+        #print("prob", prob)
+        #print("--")
+        #print("reg", entropy_reg)
+        #print("--")
+        #print("log", torch.log(prob + EPSILON))
+        #print("--")
+        #regularization = entropy_reg * torch.mean(torch.sum(-(prob + EPSILON) * torch.log(prob + EPSILON), dim=0))
+        
+        #clip values of prob to avoid nan
+        prob = torch.clamp(prob, min=EPSILON)
+        
         regularization = entropy_reg * torch.mean(torch.sum(-(prob + EPSILON) * torch.log(prob + EPSILON), dim=1))
-        print("--")
-        print("reg", regularization)
-        if regularization.isnan():
-            #quit()
-            regularization = torch.tensor(0.0, dtype=torch.float32)
-        # print("===========entropy_reg loss:", regularization)
+        
         return regularization
 
     def forward(self, inputs, training=True, prob=1.0):
