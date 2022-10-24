@@ -22,7 +22,7 @@ examples/text-classification/run_glue.py \
 --report_to tensorboard \
 --evaluation_strategy steps \
 --eval_steps 2000 \
---save_strategy epochs \
+--save_strategy epoch \
 --warmup_ratio 0.0 \
 --seed 0 \
 --weight_decay 0.0 \
