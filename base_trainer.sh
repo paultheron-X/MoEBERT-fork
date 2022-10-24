@@ -4,8 +4,8 @@ export PYTHONHASHSEED=0
 export output_dir="/home/paultheron/MoEBERT-fork/results/"
 export saving_dir=$output_dir/experiment_1  # Must correspond to the line in the excel hyperparameter tuning file
 
-python -m torch.distributed.launch --nproc_per_node=$num_gpus \
-examples/text-classification/run_glue.py \
+#python -m torch.distributed.launch --nproc_per_node=$num_gpus \
+python examples/text-classification/run_glue.py \
 --model_name_or_path bert-base-uncased \
 --task_name mnli \
 --per_device_train_batch_size 8 \
