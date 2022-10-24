@@ -1,4 +1,4 @@
-*.sh
+bert_base_mnli_example.sh
 *.ipynb
 imp_files_backup/*
 *.pkl
