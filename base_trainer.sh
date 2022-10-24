@@ -13,7 +13,7 @@ examples/text-classification/run_glue.py \
 --max_seq_length 128 \
 --per_device_train_batch_size 24 \
 --learning_rate 2e-5 \
---num_train_epochs 3 \
+--num_train_epochs 7 \
 --output_dir $output_dir/model_bert_full_test \
 --overwrite_output_dir \
 --logging_steps 20 \
