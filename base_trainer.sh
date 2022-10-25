@@ -28,7 +28,7 @@ python examples/text-classification/run_glue.py \
 --logging_dir $saving_dir/log \
 --report_to tensorboard \
 --evaluation_strategy steps \
---eval_steps 2000 \
+--eval_steps 1000 \
 --save_strategy epoch \
 --load_best_model_at_end True \
 --warmup_ratio 0.0 \
