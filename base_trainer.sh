@@ -21,7 +21,7 @@ python examples/text-classification/run_glue.py \
 --do_eval \
 --do_predict \
 --max_seq_length 128 \
---num_train_epochs 7 \
+--num_train_epochs 10 \
 --output_dir $saving_dir/model \
 --overwrite_output_dir \
 --logging_steps 20 \
