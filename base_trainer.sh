@@ -21,10 +21,10 @@ python examples/text-classification/run_glue.py \
 --do_eval \
 --max_seq_length 128 \
 --num_train_epochs 7 \
---output_dir $output_dir/model \
+--output_dir $saving_dir/model \
 --overwrite_output_dir \
 --logging_steps 20 \
---logging_dir $output_dir/log \
+--logging_dir $saving_dir/log \
 --report_to tensorboard \
 --evaluation_strategy steps \
 --eval_steps 2000 \
