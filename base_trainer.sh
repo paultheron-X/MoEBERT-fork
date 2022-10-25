@@ -19,6 +19,7 @@ python examples/text-classification/run_glue.py \
 --learning_rate $5 \
 --do_train \
 --do_eval \
+--do_predict \
 --max_seq_length 128 \
 --num_train_epochs 7 \
 --output_dir $saving_dir/model \
@@ -29,6 +30,7 @@ python examples/text-classification/run_glue.py \
 --evaluation_strategy steps \
 --eval_steps 2000 \
 --save_strategy epoch \
+--load_best_model_at_end True \
 --warmup_ratio 0.0 \
 --seed 0 \
 --weight_decay 0.0 \
