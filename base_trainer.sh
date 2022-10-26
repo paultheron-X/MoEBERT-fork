@@ -8,6 +8,7 @@ echo "experiment name is $2"
 echo "Batch size is $3"
 echo "weight decay is $4"
 echo "learning rate is $5"
+echo "eval steps is $6"
 export saving_dir=$output_dir/"experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 
 #python -m torch.distributed.launch --nproc_per_node=$num_gpus \
