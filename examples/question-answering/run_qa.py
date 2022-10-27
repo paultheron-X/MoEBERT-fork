@@ -318,11 +318,11 @@ def main():
             raise ValueError("Only support evaluation mode.")
     config.preprocess_importance = model_args.preprocess_importance
 
-    config.adv = model_args.adv
-    config.adv_eps = model_args.adv_eps
-    config.adv_inner_lr = model_args.adv_inner_lr
-    config.adv_steps = model_args.adv_steps
-    config.adv_weight = model_args.adv_weight
+    #config.adv = model_args.adv
+    #config.adv_eps = model_args.adv_eps
+    #config.adv_inner_lr = model_args.adv_inner_lr
+    #config.adv_steps = model_args.adv_steps
+    #config.adv_weight = model_args.adv_weight
 
     config.moebert = model_args.moebert
     if config.moebert is not None:
