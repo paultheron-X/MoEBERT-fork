@@ -12,7 +12,6 @@ echo "eval steps is $6"
 export saving_dir=$output_dir/"squad_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 
 if [ $1 = "squad" ]; then
-
     python examples/question-answering/run_qa.py \
     --model_name_or_path bert-base-uncased \
     --dataset_name squad \
@@ -22,7 +21,6 @@ if [ $1 = "squad" ]; then
     --do_train \
     --do_eval \
     --do_predict \
-    --max_seq_length 128 \
     --num_train_epochs 10 \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
@@ -37,9 +35,8 @@ if [ $1 = "squad" ]; then
     --seed 0 \
     --weight_decay 0.0 \
     --fp16 
-    
-elif [ $1 = "squad2" ]; then
 
+elif [ $1 = "squad2" ]; then
     python examples/question-answering/run_qa.py \
     --model_name_or_path bert-base-uncased \
     --dataset_name squad_v2 \
@@ -49,7 +46,6 @@ elif [ $1 = "squad2" ]; then
     --do_train \
     --do_eval \
     --do_predict \
-    --max_seq_length 128 \
     --num_train_epochs 10 \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
