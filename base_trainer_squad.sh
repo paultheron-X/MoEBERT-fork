@@ -59,7 +59,7 @@ elif [ $1 = "squad2" ]; then
     --warmup_ratio 0.0 \
     --seed 0 \
     --weight_decay 0.0 \
-    --fp16 \
+    --fp16
 else
     echo "Task name not recognized"
 fi
