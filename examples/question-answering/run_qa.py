@@ -327,7 +327,7 @@ def main():
     config.moebert = model_args.moebert
     if config.moebert is not None:
         config.moebert = config.moebert.lower()
-    config.moebert_consistency = model_args.moebert_consistency
+    #config.moebert_consistency = model_args.moebert_consistency
     config.moebert_distill = model_args.moebert_distill
     config.moebert_expert_dim = model_args.moebert_expert_dim
     config.moebert_expert_dropout = model_args.moebert_expert_dropout
