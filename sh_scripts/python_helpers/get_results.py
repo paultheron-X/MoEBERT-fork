@@ -6,7 +6,7 @@ import pandas as pd
 
 num_experiments = 40
 
-datasets_names = ["cola", "sst-2", "mrpc", "qqp", "mnli", "qnli", "rte", "squad"]
+datasets_names = ["cola", "sst-2", "mrpc", "qqp", "mnli", "qnli", "rte", "squad", "mnli-bis", "qqp-bis"]
 
 metric_dict = {
     "cola": "matthews_correlation",
@@ -17,6 +17,8 @@ metric_dict = {
     "qnli": "accuracy",
     "rte": "accuracy",
     "squad": "f1",
+    "mnli-bis": "accuracy",
+    "qqp-bis": "f1"
 }
 
 
@@ -38,7 +40,7 @@ def get_best_result(all_results, train_log):
 
 
 dict_res = {
-    "experiment": [i for i in range(num_experiments+1)],
+    "experiment": [i for i in range(num_experiments + 1)],
 }
 
 for dataset_name in datasets_names:
@@ -47,7 +49,7 @@ for dataset_name in datasets_names:
         continue
     else:
         dict_res_dataset = {
-            "experiment": [i for i in range(num_experiments+1)],
+            "experiment": [i for i in range(num_experiments + 1)],
             dataset_name + "_best_epoch": [],
             dataset_name + "_best_metric": [],
         }
@@ -66,6 +68,7 @@ for dataset_name in datasets_names:
             except FileNotFoundError:
                 train_log = {"log_history": []}
             best_score, best_epoch = get_best_result(all_results, train_log)
+            best_score = round(best_score, 4)
 
             dict_res_dataset[dataset_name + "_best_epoch"].append(best_epoch)
             dict_res_dataset[dataset_name + "_best_metric"].append(best_score)
