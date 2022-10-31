@@ -248,7 +248,7 @@ else
         then
             echo "Launching the same script in a different config"
 
-            bash hyperparameter_metatuner.sh $1 4
+            bash sh_scripts/hyperparameter_metatuner.sh $1 4
         fi
 
     elif [ $2 = 2 ]
@@ -286,7 +286,7 @@ else
         then
             echo "Launching the same script in a different config"
 
-            bash hyperparameter_metatuner.sh $1 5
+            bash sh_scripts/hyperparameter_metatuner.sh $1 5
         fi
 
     elif [ $2 = 3 ]
@@ -321,7 +321,7 @@ else
         then
             echo "Launching the same script in a different config"
 
-            bash hyperparameter_metatuner.sh $1 6
+            bash sh_scripts/hyperparameter_metatuner.sh $1 6
         fi
 
     elif [ $2 = 4 ]
