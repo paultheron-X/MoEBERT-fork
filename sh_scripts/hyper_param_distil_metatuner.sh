@@ -49,10 +49,10 @@ else
         --do_eval \
         --do_predict \
         --max_seq_length 128 \
-        --output_dir results/experiment_finetuned_model/model \
+        --output_dir results/experiment_$1_finetuned_model/model \
         --overwrite_output_dir \
         --logging_steps 20 \
-        --logging_dir results/experiment_finetuned_model/log \
+        --logging_dir results/experiment_$1_finetuned_model/log \
         --report_to tensorboard \
         --evaluation_strategy steps \
         --eval_steps $eval_steps \
@@ -67,7 +67,7 @@ else
 
     export dir_imp = "results/experiment_$1_finetuned_model/model/importance_$1"
     mkdir -p $dir_imp
-    mv importance.pkl $dir_imp/importance_$1.pkl
+    sudo mv importance.pkl $dir_imp/importance_$1.pkl
 
     export CUDA_VISIBLE_DEVICES=0,1,2,3
 fi
@@ -87,3 +87,4 @@ then
         
         bash sh_scripts/base_moebert_trainer.sh cola $cmd 10
     done
+fi
