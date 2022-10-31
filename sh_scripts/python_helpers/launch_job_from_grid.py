@@ -2,7 +2,7 @@ import pandas as pd
 import argparse
 
 
-hyper_params = pd.read_csv("sh_scripts/python_helpers/moebert_distil_grid.csv", sep=";", index_col=0)
+hyper_params = pd.read_csv("sh_scripts/python_helpers/moebert_distil_grid.csv", sep=";", index_col=0, dtype={'experiment_name': int, 'batch_size': int, 'learning_rate': float, 'weight_decay': float, 'entropy': float, 'gamma': float, 'distill': float})
 
 
 def _parse_args():
