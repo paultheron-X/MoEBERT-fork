@@ -2,7 +2,20 @@ import pandas as pd
 import argparse
 
 
-hyper_params = pd.read_csv("sh_scripts/python_helpers/moebert_distil_grid.csv", sep=";", index_col=0, dtype={'experiment_name': int, 'batch_size': int, 'learning_rate': float, 'weight_decay': float, 'entropy': float, 'gamma': float, 'distill': float})
+hyper_params = pd.read_csv(
+    "sh_scripts/python_helpers/moebert_distil_grid.csv",
+    sep=";",
+    index_col=0,
+    dtype={
+        "experiment_name": int,
+        "batch_size": int,
+        "learning_rate": float,
+        "weight_decay": float,
+        "entropy": float,
+        "gamma": float,
+        "distill": float,
+    },
+)
 
 
 def _parse_args():
@@ -21,5 +34,5 @@ args = _parse_args()
 jobs_params = hyper_params.loc[int(args.num)]
 
 print(
-    f"{jobs_params.name} {jobs_params.batch_size} {jobs_params.learning_rate} {jobs_params.weight_decay} {jobs_params.entropy} {jobs_params.gamma} {jobs_params.distill}"
+    f"{jobs_params.name} {int(jobs_params.batch_size)} {jobs_params.learning_rate} {jobs_params.weight_decay} {jobs_params.entropy} {jobs_params.gamma} {jobs_params.distill}"
 )
