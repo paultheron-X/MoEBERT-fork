@@ -10,7 +10,9 @@ echo "weight decay is $4"
 echo "learning rate is $5"
 echo "entropy is $6"
 echo "gamma is $7"
-echo "eval steps is $8"
+echo "distillation penalty is $8"
+echo "eval steps is $9"
+
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model/model"
 
@@ -32,7 +34,7 @@ python examples/text-classification/run_glue.py \
 --logging_dir $saving_dir/log \
 --report_to tensorboard \
 --evaluation_strategy steps \
---eval_steps $8 \
+--eval_steps $9 \
 --save_strategy epoch \
 --load_best_model_at_end True \
 --warmup_ratio 0.0 \
@@ -40,7 +42,7 @@ python examples/text-classification/run_glue.py \
 --weight_decay 0.0 \
 --fp16 \
 --moebert moe \
---moebert_distill 5.0 \
+--moebert_distill $8 \
 --moebert_expert_num 4 \
 --moebert_expert_dim 768 \
 --moebert_expert_dropout 0.1 \

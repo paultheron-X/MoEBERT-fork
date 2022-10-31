@@ -22,7 +22,7 @@ class MoELayer(nn.Module):
             self.hash_list = self._balance_hash_list(hash_list)
         elif route_method in ["soft-tree"]:
             config = {
-                "k": 2,
+                "k": 1,
                 "nb_experts": 4,
                 "gamma": gamma, # gamma = [0.01, 0.1, 1]
                 "input_dim": hidden_size,

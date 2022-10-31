@@ -21,5 +21,5 @@ args = _parse_args()
 jobs_params = hyper_params.loc[int(args.num)]
 
 print(
-    f"{jobs_params.name} {jobs_params.batch_size} {jobs_params.learning_rate} {jobs_params.weight_decay} {jobs_params.entropy} {jobs_params.gamma}"
+    f"{jobs_params.name} {jobs_params.batch_size} {jobs_params.learning_rate} {jobs_params.weight_decay} {jobs_params.entropy} {jobs_params.gamma} {jobs_params.distill}"
 )
