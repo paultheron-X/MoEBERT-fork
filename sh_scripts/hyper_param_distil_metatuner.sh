@@ -65,7 +65,7 @@ else
     
     echo "Finetuned model created for task $1"
 
-    export dir_imp = "results/experiment_$1_finetuned_model/model/importance_$1"
+    export dir_imp = "results/experiment_$1_finetuned_model"
     mkdir -p $dir_imp
     sudo mv importance.pkl $dir_imp/importance_$1.pkl
 

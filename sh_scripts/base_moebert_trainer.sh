@@ -47,7 +47,7 @@ python examples/text-classification/run_glue.py \
 --moebert_expert_dim 768 \
 --moebert_expert_dropout 0.1 \
 --moebert_load_balance 0.0 \
---moebert_load_importance $original_model_dir/importance_$1.pkl \
+--moebert_load_importance $original_model_dir/../importance_$1.pkl \
 --moebert_route_method soft-tree \
 --moebert_share_importance 512 \
 --moebert_gate_entropy $6 \
