@@ -36,7 +36,7 @@ then
     --warmup_ratio 0.0 \
     --seed 0 \
     --weight_decay 0.0 \
-    --fp16 \
+    --fp16 
 else
     python examples/text-classification/run_glue.py \
     --model_name_or_path bert-base-uncased \
@@ -61,5 +61,5 @@ else
     --warmup_ratio 0.0 \
     --seed 0 \
     --weight_decay 0.0 \
-    --fp16 \
+    --fp16 
 fi
