@@ -34,12 +34,12 @@ fi
 
 if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
 then
-    python examples/text-classification/run_glue.py \
-    --model_name_or_path bert-base-uncased \
+    python -m torch.distributed.launch --nproc_per_node=$num_gpus \
+    examples/text-classification/run_glue.py \
+    --model_name_or_path results/experiment_$1_finetuned_model/model \
     --task_name $1 \
     --preprocess_importance \
     --do_eval \
-    --do_predict \
     --max_seq_length 128 \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
@@ -56,14 +56,13 @@ then
     --fp16 
 else
     python examples/text-classification/run_glue.py \
-    --model_name_or_path bert-base-uncased \
+    --model_name_or_path results/experiment_$1_finetuned_model/model \
     --task_name $1 \
     --per_device_train_batch_size $3 \
     --weight_decay $4 \
     --learning_rate $5 \
-    --do_train \
+    --preprocess_importance \
     --do_eval \
-    --do_predict \
     --max_seq_length 128 \
     --num_train_epochs 10 \
     --output_dir $saving_dir/model \
