@@ -7,23 +7,43 @@ echo "Task name is $1"
 
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model/model"
 
-python examples/text-classification/run_glue.py \
-        --model_name_or_path results/experiment_$1_finetuned_model/model \
-        --task_name $1 \
-        --preprocess_importance \
-        --do_eval \
-        --do_predict \
-        --max_seq_length 128 \
-        --output_dir results/experiment_$1_finetuned_model/model \
-        --overwrite_output_dir \
-        --logging_steps 20 \
-        --logging_dir results/experiment_$1_finetuned_model/log \
-        --report_to tensorboard \
-        --evaluation_strategy steps \
-        --eval_steps 100 \
-        --save_strategy epoch \
-        --load_best_model_at_end True \
-        --warmup_ratio 0.0 \
-        --seed 0 \
-        --weight_decay 0.0 \
-        --fp16
+if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
+then
+    python examples/text-classification/run_glue.py \
+    --model_name_or_path bert-base-uncased \
+    --task_name $1 \
+    --preprocess_importance \
+    --do_eval \
+    --do_predict \
+    --max_seq_length 128 \
+    --logging_steps 20 \
+    --report_to tensorboard \
+    --evaluation_strategy epoch \
+    --save_strategy epoch \
+    --load_best_model_at_end True \
+    --metric_for_best_model $metric_for_best_model \
+    --warmup_ratio 0.0 \
+    --seed 0 \
+    --weight_decay 0.0 \
+    --fp16 
+else
+    python examples/text-classification/run_glue.py \
+    --model_name_or_path bert-base-uncased \
+    --task_name $1 \
+    --preprocess_importance \
+    --do_eval \
+    --do_predict \
+    --max_seq_length 128 \
+    --num_train_epochs 10 \
+    --logging_steps 20 \
+    --report_to tensorboard \
+    --evaluation_strategy steps \
+    --eval_steps 1000 \
+    --save_strategy epoch \
+    --load_best_model_at_end True \
+    --metric_for_best_model $metric_for_best_model \
+    --warmup_ratio 0.0 \
+    --seed 0 \
+    --weight_decay 0.0 \
+    --fp16 
+fi
