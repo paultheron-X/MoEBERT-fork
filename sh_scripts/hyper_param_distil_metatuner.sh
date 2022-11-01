@@ -41,35 +41,12 @@ else
 
     echo "Finetuned model created for task $1"
     echo "Now preprocessing importance for this task"
-    export CUDA_VISIBLE_DEVICES=0
-    python examples/text-classification/run_glue.py \
-        --model_name_or_path results/experiment_$1_finetuned_model/model \
-        --task_name $1 \
-        --preprocess_importance \
-        --do_eval \
-        --do_predict \
-        --max_seq_length 128 \
-        --output_dir results/experiment_$1_finetuned_model/model \
-        --overwrite_output_dir \
-        --logging_steps 20 \
-        --logging_dir results/experiment_$1_finetuned_model/log \
-        --report_to tensorboard \
-        --evaluation_strategy steps \
-        --eval_steps $eval_steps \
-        --save_strategy epoch \
-        --load_best_model_at_end True \
-        --warmup_ratio 0.0 \
-        --seed 0 \
-        --weight_decay 0.0 \
-        --fp16
+    bash sh_scripts/importance_preprocess.sh $1
+
+    python merge_importance.py --task $1 --num_files 3
     
     echo "Finetuned model created for task $1"
 
-    export dir_imp = "results/experiment_$1_finetuned_model"
-    mkdir -p $dir_imp
-    sudo mv importance.pkl $dir_imp/importance_$1.pkl
-
-    export CUDA_VISIBLE_DEVICES=0,1,2,3
 fi
 echo "Starting training for task $1, with the given hyperparameters"
 
