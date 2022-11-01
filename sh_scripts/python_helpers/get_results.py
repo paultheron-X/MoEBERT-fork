@@ -4,7 +4,7 @@ import json
 import os
 import pandas as pd
 
-num_experiments = 40
+num_experiments = 52
 
 datasets_names = ["cola", "sst-2", "mrpc", "qqp", "mnli", "qnli", "rte", "squad", "mnli-bis", "qqp-bis"]
 

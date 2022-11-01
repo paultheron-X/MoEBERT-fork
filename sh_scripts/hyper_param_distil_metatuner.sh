@@ -77,14 +77,14 @@ echo "Now starting distillation for task $1"
 
 echo "Launching Experiment Set $2"
 
-if [ $2 = 1 ]
-then
-    for i in {1..20}
-    do
-        echo "Launching Moebert Experiment $i"
+BEGIN=$((20*$2 + -19))
+END=$((20*$2))
 
-        args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $i)
-        
-        bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps
-    done
-fi
+
+for i in $(eval echo "{$BEGIN..$END}")
+do
+    echo "Launching Moebert Experiment $i"
+    args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $i)
+
+    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps    
+done
