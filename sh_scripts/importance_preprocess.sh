@@ -20,7 +20,7 @@ python examples/text-classification/run_glue.py \
         --logging_dir results/experiment_$1_finetuned_model/log \
         --report_to tensorboard \
         --evaluation_strategy steps \
-        --eval_steps $eval_steps \
+        --eval_steps 100 \
         --save_strategy epoch \
         --load_best_model_at_end True \
         --warmup_ratio 0.0 \
