@@ -385,7 +385,7 @@ else
         bash sh_scripts/base_trainer.sh $1 34 32 0.0 2e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 34"
-        
+
     elif [ $2 = 6 ]
     then
         echo "Training mode 6"
@@ -417,52 +417,52 @@ else
     then
         echo "Training mode 1"
 
-        bash sh_scripts/base_trainer_1.sh $1 41 8 0.1 2e-5 $eval_steps 
+        bash sh_scripts/base_trainer.sh $1 41 8 0.1 2e-5 $eval_steps 
         echo "-----------"
         echo "Finished experiment 41"
 
-        bash sh_scripts/base_trainer_1.sh $1 42 8 0.01 4e-5 $eval_steps 
+        bash sh_scripts/base_trainer.sh $1 42 8 0.01 4e-5 $eval_steps 
         echo "-----------"
         echo "Finished experiment 42"
 
-        bash sh_scripts/base_trainer_1.sh $1 43 16 0.0 1e-5 $eval_steps 
+        bash sh_scripts/base_trainer.sh $1 43 16 0.0 1e-5 $eval_steps 
         echo "-----------"
         echo "Finished experiment 43"
 
-        bash sh_scripts/base_trainer_1.sh $1 44 16 0.01 3e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 44 16 0.01 3e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 44"
 
         echo "Training mode 2"
-        bash sh_scripts/base_trainer_1.sh $1 45 16 0.1 4e-5 $eval_steps  
+        bash sh_scripts/base_trainer.sh $1 45 16 0.1 4e-5 $eval_steps  
         echo "-----------"
         echo "Finished experiment 45"
 
-        bash sh_scripts/base_trainer_1.sh $1 46 32 0.1 2e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 46 32 0.1 2e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 46"
 
-        bash sh_scripts/base_trainer_1.sh $1 47 32 0.0 4e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 47 32 0.0 4e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 47"
 
-        bash sh_scripts/base_trainer_1.sh $1 48 64 0.01 1e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 48 64 0.01 1e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 48"
 
-        bash sh_scripts/base_trainer_1.sh $1 49 64 0.1 1e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 49 64 0.1 1e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 49"
 
-        bash sh_scripts/base_trainer_1.sh $1 50 64 0.0 2e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 50 64 0.0 2e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 50"
 
-        bash sh_scripts/base_trainer_1.sh $1 51 64 0.1 3e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 51 64 0.1 3e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 51"
 
-        bash sh_scripts/base_trainer_1.sh $1 52 64 0.01 4e-5 $eval_steps
+        bash sh_scripts/base_trainer.sh $1 52 64 0.01 4e-5 $eval_steps
         echo "-----------"
         echo "Finished experiment 52"
     else
