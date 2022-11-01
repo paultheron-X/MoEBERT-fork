@@ -16,6 +16,30 @@ echo "eval steps is $9"
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model/model"
 
+if [ $1 = 'cola' ]
+then
+    export metric_for_best_model="matthews_correlation"
+elif [ $1 = 'rte' ]
+then
+    export metric_for_best_model="accuracy"
+elif [ $1 = 'mrpc' ]
+then
+    export metric_for_best_model="f1"
+elif [ $1 = 'sst2' ]
+then
+    export metric_for_best_model="accuracy"
+
+elif [ $1 = 'qqp' ]
+then
+    export metric_for_best_model="f1"
+elif [ $1 = 'mnli' ]
+then
+    export metric_for_best_model="accuracy"
+elif [ $1 = 'qnli' ]
+then
+    export metric_for_best_model="accuracy"
+fi
+
 if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
 then
     python examples/text-classification/run_glue.py \
@@ -37,6 +61,7 @@ then
     --evaluation_strategy epoch \
     --save_strategy epoch \
     --load_best_model_at_end True \
+    --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
     --weight_decay 0.0 \
@@ -73,6 +98,7 @@ else
     --eval_steps $9 \
     --save_strategy epoch \
     --load_best_model_at_end True \
+    --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
     --weight_decay 0.0 \
