@@ -114,3 +114,4 @@ else
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
     --moebert_gate_gamma $7
+fi
