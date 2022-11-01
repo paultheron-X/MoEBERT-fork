@@ -20,8 +20,6 @@ then
     --report_to tensorboard \
     --evaluation_strategy epoch \
     --save_strategy epoch \
-    --load_best_model_at_end True \
-    --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
     --weight_decay 0.0 \
@@ -40,8 +38,6 @@ else
     --evaluation_strategy steps \
     --eval_steps 1000 \
     --save_strategy epoch \
-    --load_best_model_at_end True \
-    --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
     --weight_decay 0.0 \
