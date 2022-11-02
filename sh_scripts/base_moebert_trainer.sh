@@ -1,7 +1,7 @@
 export num_gpus=3
 export CUBLAS_WORKSPACE_CONFIG=":16:8" # https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
 export PYTHONHASHSEED=0
-export output_dir="/home/paultheron/MoEBERT-fork/results/"
+export output_dir="/home/paultheron/MoEBERT-fork/results"
 echo "Script name is: $0"
 echo "Task name is $1"
 echo "experiment name is $2"
@@ -60,7 +60,7 @@ then
     --report_to tensorboard \
     --evaluation_strategy epoch \
     --save_strategy epoch \
-    --load_best_model_at_end True \
+    --load_best_model_at_end False \
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
@@ -97,7 +97,7 @@ else
     --evaluation_strategy steps \
     --eval_steps $9 \
     --save_strategy epoch \
-    --load_best_model_at_end True \
+    --load_best_model_at_end False \
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
