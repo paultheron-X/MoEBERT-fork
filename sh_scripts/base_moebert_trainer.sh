@@ -14,7 +14,7 @@ echo "distillation penalty is $8"
 echo "eval steps is $9"
 
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
-export original_model_dir=$output_dir/"experiment_$1_finetuned_model/model"
+export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
 
 if [ $1 = 'cola' ]
 then
@@ -43,7 +43,7 @@ fi
 if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
 then
     python examples/text-classification/run_glue.py \
-    --model_name_or_path $original_model_dir \
+    --model_name_or_path $original_model_dir/model \
     --task_name $1 \
     --per_device_train_batch_size $3 \
     --weight_decay $4 \
@@ -72,14 +72,14 @@ then
     --moebert_expert_dim 768 \
     --moebert_expert_dropout 0.1 \
     --moebert_load_balance 0.0 \
-    --moebert_load_importance $original_model_dir/../importance_$1.pkl \
+    --moebert_load_importance $original_model_dir/importance_$1.pkl \
     --moebert_route_method soft-tree \
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
     --moebert_gate_gamma $7
 else
     python examples/text-classification/run_glue.py \
-    --model_name_or_path $original_model_dir \
+    --model_name_or_path $original_model_dir/model \
     --task_name $1 \
     --per_device_train_batch_size $3 \
     --weight_decay $4 \
@@ -109,7 +109,7 @@ else
     --moebert_expert_dim 768 \
     --moebert_expert_dropout 0.1 \
     --moebert_load_balance 0.0 \
-    --moebert_load_importance $original_model_dir/../importance_$1.pkl \
+    --moebert_load_importance $original_model_dir/importance_$1.pkl \
     --moebert_route_method soft-tree \
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
