@@ -55,7 +55,8 @@ then
     --weight_decay 0.0 \
     --fp16 
 else
-    python examples/text-classification/run_glue.py \
+    python -m torch.distributed.launch --nproc_per_node=$num_gpus \
+    examples/text-classification/run_glue.py \
     --model_name_or_path results/experiment_$1_finetuned_model/model \
     --task_name $1 \
     --preprocess_importance \
