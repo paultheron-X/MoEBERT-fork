@@ -58,9 +58,6 @@ else
     python examples/text-classification/run_glue.py \
     --model_name_or_path results/experiment_$1_finetuned_model/model \
     --task_name $1 \
-    --per_device_train_batch_size $3 \
-    --weight_decay $4 \
-    --learning_rate $5 \
     --preprocess_importance \
     --do_eval \
     --max_seq_length 128 \
