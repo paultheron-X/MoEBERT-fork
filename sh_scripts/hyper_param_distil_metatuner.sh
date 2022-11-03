@@ -63,5 +63,5 @@ do
     echo "Launching Moebert Experiment $i"
     args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $i)
 
-    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps    
+    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps $6
 done

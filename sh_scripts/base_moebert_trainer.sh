@@ -12,6 +12,7 @@ echo "entropy is $6"
 echo "gamma is $7"
 echo "distillation penalty is $8"
 echo "eval steps is $9"
+echo "1st stage best epoch is ${10}"
 
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
@@ -52,7 +53,7 @@ then
     --do_eval \
     --do_predict \
     --max_seq_length 128 \
-    --num_train_epochs 10 \
+    --num_train_epochs $((10 + ${10})) \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
     --logging_steps 20 \
@@ -88,7 +89,7 @@ else
     --do_eval \
     --do_predict \
     --max_seq_length 128 \
-    --num_train_epochs 10 \
+    --num_train_epochs $((10 + ${10})) \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
     --logging_steps 20 \
