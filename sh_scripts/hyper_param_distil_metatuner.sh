@@ -1,9 +1,9 @@
 echo "Getting best params from pretraining for task $1"
 echo "Experiment Set is $2"
-echo "Best lr is $3"
-echo "Best batch size is $4"
-echo "Best weight decay is $5"
-echo "Best epoch is $6"
+echo "Best lr was $3"
+echo "Best batch size was $4"
+echo "Best weight decay was $5"
+echo "Best epoch was $6"
 
 if [ $1 = "mnli" ] 
 then
