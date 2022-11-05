@@ -3,6 +3,16 @@
 import json
 import os
 import pandas as pd
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--advanced',
+        action='store_true',
+        help='If set, the script will also aggregate the results of the advanced experiments'
+    )
+    return parser.parse_args()
 
 num_experiments = 52
 
@@ -22,7 +32,7 @@ metric_dict = {
 }
 
 
-def get_best_result(all_results, train_log):
+def get_best_result(all_results, train_log, dataset_name):
     best_score = 0
     best_epoch = 0
     for ind, dict_ in enumerate(train_log["log_history"]):
@@ -38,52 +48,71 @@ def get_best_result(all_results, train_log):
         best_epoch = all_results["epoch"]
     return best_score, best_epoch
 
+def main(args):
+    dict_res = {
+        "experiment": [i for i in range(num_experiments + 1)],
+    }
 
-dict_res = {
-    "experiment": [i for i in range(num_experiments + 1)],
-}
+    for dataset_name in datasets_names:
+        # check if the directory exists
+        if not os.path.exists("results_gcloud/" + dataset_name):
+            continue
+        else:
+            dict_res_dataset = {
+                "experiment": [i for i in range(num_experiments + 1)],
+                dataset_name + "_best_epoch": [],
+                dataset_name + "_best_metric": [],
+            }
+            for experiment in range(num_experiments + 1):
+                if args.advanced:
+                    path = f"results_gcloud/{dataset_name}/moebert_experiment_{experiment}"
+                else:
+                    path = f"results_gcloud/{dataset_name}/experiment_{experiment}"
+                try:
+                    with open(path + "/all_results.json") as f:
+                        all_results = json.load(f)
+                except FileNotFoundError:
+                    all_results = {
+                        "eval_" + metric_dict[dataset_name]: 0,
+                        "epoch": 0,
+                    }
+                try:
+                    with open(path + "/trainer_state.json") as f:
+                        train_log = json.load(f)
+                except FileNotFoundError:
+                    train_log = {"log_history": []}
+                best_score, best_epoch = get_best_result(all_results, train_log, dataset_name)
+                best_score = round(best_score, 4)
 
-for dataset_name in datasets_names:
-    # check if the directory exists
-    if not os.path.exists("results_gcloud/" + dataset_name):
-        continue
+                dict_res_dataset[dataset_name + "_best_epoch"].append(best_epoch)
+                dict_res_dataset[dataset_name + "_best_metric"].append(best_score)
+
+            dataset_df = pd.DataFrame(dict_res_dataset)
+            if args.advanced:
+                dataset_df.to_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv", index=False)
+            else :    
+                dataset_df.to_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
+
+    # aggregate results
+    df_fin = pd.DataFrame(dict_res)
+    for dataset_name in datasets_names:
+        try:
+            if args.advanced:
+                df_fin = df_fin.merge(
+                    pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv"), on="experiment"
+                )            
+            else:
+                df_fin = df_fin.merge(
+                    pd.read_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv"), on="experiment"
+                )
+        except FileNotFoundError:
+            pass
+    if args.advanced:
+        df_fin.to_csv("results_gcloud/moebert_results_aggregated.csv", index=False)
     else:
-        dict_res_dataset = {
-            "experiment": [i for i in range(num_experiments + 1)],
-            dataset_name + "_best_epoch": [],
-            dataset_name + "_best_metric": [],
-        }
-        for experiment in range(num_experiments + 1):
-            try:
-                with open(f"results_gcloud/{dataset_name}/experiment_{experiment}/all_results.json") as f:
-                    all_results = json.load(f)
-            except FileNotFoundError:
-                all_results = {
-                    "eval_" + metric_dict[dataset_name]: 0,
-                    "epoch": 0,
-                }
-            try:
-                with open(f"results_gcloud/{dataset_name}/experiment_{experiment}/trainer_state.json") as f:
-                    train_log = json.load(f)
-            except FileNotFoundError:
-                train_log = {"log_history": []}
-            best_score, best_epoch = get_best_result(all_results, train_log)
-            best_score = round(best_score, 4)
-
-            dict_res_dataset[dataset_name + "_best_epoch"].append(best_epoch)
-            dict_res_dataset[dataset_name + "_best_metric"].append(best_score)
-
-        dataset_df = pd.DataFrame(dict_res_dataset)
-        dataset_df.to_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
-
-# aggregate results
-df_fin = pd.DataFrame(dict_res)
-for dataset_name in datasets_names:
-    try:
-        df_fin = df_fin.merge(
-            pd.read_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv"), on="experiment"
-        )
-    except FileNotFoundError:
-        pass
-
-df_fin.to_csv("results_gcloud/results_aggregated.csv", index=False)
+        df_fin.to_csv("results_gcloud/results_aggregated.csv", index=False)
+    
+if __name__ == "__main__":
+    args  = parse_args()
+    
+    main(args)
