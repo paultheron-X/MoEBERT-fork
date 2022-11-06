@@ -19,7 +19,7 @@ class SparsityMetrics(Metric):
         self.sparsity = sparsity
         
     def compute(self):
-        return self.sparsity
+        return self.sparsity.item()
 
 class SmoothStep(nn.Module):
     """A smooth-step function.

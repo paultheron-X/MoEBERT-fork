@@ -65,6 +65,7 @@ from .file_utils import (
 )
 from .modeling_utils import PreTrainedModel, unwrap_model
 from .moebert.utils import process_ffn
+from .moebert.gates import SoftTreeGate
 from .optimization import Adafactor, AdamW, get_scheduler
 from .tokenization_utils_base import PreTrainedTokenizerBase
 from .trainer_callback import (
@@ -1233,6 +1234,16 @@ class Trainer:
 
             self._total_loss_scalar += tr_loss_scalar
             self._globalstep_last_logged = self.state.global_step
+            
+            def get_sparsity(model):
+                for name, module in model.named_modules():
+                    if isinstance(module, SoftTreeGate):
+                        return module.sparsity_metrics.compute()
+                return 0.0
+            sparsity = get_sparsity(model)
+            
+            logs["sparsity"] = sparsity
+            logs = denumpify_detensorize(logs)
 
             self.log(logs)
 
@@ -1250,9 +1261,11 @@ class Trainer:
                 self.log(metrics)
             else:
                 metrics = self.evaluate()
+            print(metrics)
             self._report_to_hp_search(trial, epoch, metrics)
 
         if self.control.should_save:
+            metrics = denumpify_detensorize(metrics)
             self._save_checkpoint(model, trial, metrics=metrics)
             self.control = self.callback_handler.on_save(self.args, self.state, self.control)
 
@@ -1739,6 +1752,8 @@ class Trainer:
         output.metrics.update(speed_metrics(metric_key_prefix, start_time, n_samples))
         if self.eval_dataset_mnli_mm is None:  # do not log for MNLI
             self.log(output.metrics)
+        else:
+           self.log(output.metrics) 
 
         if self.args.tpu_metrics_debug or self.args.debug:
             # tpu-comment: Logging debug metrics for PyTorch/XLA (compile, execute times, ops, etc.)
@@ -1854,7 +1869,15 @@ class Trainer:
             labels_gatherer = DistributedTensorGatherer(world_size, num_examples, make_multiple_of=make_multiple_of)
 
         model.eval()
-
+        
+        # Reset the sparsity metric
+        def reset_custom_metrics(model):
+            for name, module in model.named_modules():
+                if isinstance(module, SoftTreeGate):
+                    module.sparsity_metrics.reset()
+        
+        reset_custom_metrics(model)
+                    
         if is_torch_tpu_available():
             dataloader = pl.ParallelLoader(dataloader, [self.args.device]).per_device_loader(self.args.device)
 
@@ -1902,6 +1925,17 @@ class Trainer:
             metrics = self.compute_metrics(EvalPrediction(predictions=preds, label_ids=label_ids))
         else:
             metrics = {}
+            
+        # Gather the sparsity metrics
+        def gather_custom_metrics(model):
+            for name, module in model.named_modules():
+                if isinstance(module, SoftTreeGate):
+                    sparsity_value = module.sparsity_metrics.compute()
+                    module.sparsity_metrics.reset()
+                    return sparsity_value
+            return 0.0
+        
+        metrics["sparsity"] = gather_custom_metrics(model)
 
         # To be JSON-serializable, we need to remove numpy types or zero-d tensors
         metrics = denumpify_detensorize(metrics)
