@@ -90,7 +90,7 @@ else
     --do_eval \
     --do_predict \
     --max_seq_length 128 \
-    --num_train_epochs $NUM_EPOCH \
+    --num_train_epochs 10 \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
     --logging_steps 20 \
