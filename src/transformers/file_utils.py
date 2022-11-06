@@ -1631,7 +1631,6 @@ class TensorType(ExplicitEnum):
     NUMPY = "np"
     JAX = "jax"
 
-
 class _BaseLazyModule(ModuleType):
     """
     Module class that surfaces all objects but only performs associated imports when the objects are requested.
@@ -1648,6 +1647,7 @@ class _BaseLazyModule(ModuleType):
                 self._class_to_module[value] = key
         # Needed for autocompletion in an IDE
         self.__all__ = list(import_structure.keys()) + sum(import_structure.values(), [])
+        self.__spec__ = globals()['__spec__']
 
     # Needed for autocompletion in an IDE
     def __dir__(self):
