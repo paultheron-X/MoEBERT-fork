@@ -41,7 +41,6 @@ then
     export metric_for_best_model="accuracy"
 fi
 
-NUM_EPOCH=$((10 + ${10}))
 
 if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
 then
@@ -55,7 +54,7 @@ then
     --do_eval \
     --do_predict \
     --max_seq_length 128 \
-    --num_train_epochs $NUM_EPOCH \
+    --num_train_epochs 10 \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
     --logging_steps 20 \
@@ -67,6 +66,7 @@ then
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
+    --ignore_data_skip True \
     --fp16 \
     --moebert moe \
     --moebert_distill $8 \
@@ -103,6 +103,7 @@ else
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
+    --ignore_data_skip True \
     --fp16 \
     --moebert moe \
     --moebert_distill $8 \

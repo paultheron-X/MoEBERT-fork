@@ -6,3 +6,6 @@ imp_files_backup/*
 *.egg-info
 results/*
 mnli/log
+
+results_backup/*
+results_old/*
