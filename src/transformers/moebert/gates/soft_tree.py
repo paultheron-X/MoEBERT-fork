@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchmetrics import Metric
 
 import numpy as np
 import math
@@ -9,6 +10,16 @@ EPSILON = 1e-6
 
 # torch.autograd.set_detect_anomaly(True)
 
+class SparsityMetrics(Metric):
+    def __init__(self, dist_sync_on_step=False):
+        super().__init__(dist_sync_on_step=dist_sync_on_step)
+        self.add_state("sparsity", default=torch.tensor(0.0), dist_reduce_fx="mean")
+        
+    def update(self, sparsity):
+        self.sparsity = sparsity
+        
+    def compute(self):
+        return self.sparsity
 
 class SmoothStep(nn.Module):
     """A smooth-step function.
@@ -104,6 +115,8 @@ class SoftTreeGate(nn.Module):
         self.balanced_splitting = config.get("balanced_splitting", False)
         self.balanced_splitting_penalty = config.get("balanced_splitting_penalty", 0.0)
         self.exp_decay_mov_ave = config.get("exp_decay_mov_ave", 0.0)
+        
+        self.sparsity_metrics = SparsityMetrics()
 
         if not self.leaf:
             self.selector_layer = nn.Linear(self.input_dim, self.k, bias=False)
@@ -259,6 +272,7 @@ class SoftTreeGate(nn.Module):
                 # print(s_concat.shape)
 
                 avg_sparsity = torch.mean(s_avg)  # average over batch
+                self.sparsity_metrics.update(avg_sparsity)
 
                 soft_averages = torch.mean(w_permuted, dim=[0, 1, 2])  # (nb_experts,)
                 hard_averages = torch.mean(torch.ones_like(s_concat) - s_concat, dim=[0, 1, 2])  # (nb_experts,)
