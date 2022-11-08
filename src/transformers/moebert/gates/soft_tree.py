@@ -11,16 +11,33 @@ EPSILON = 1e-6
 # torch.autograd.set_detect_anomaly(True)
 
 class SparsityMetrics(Metric):
+    
+    is_differentiable: False
+    higher_is_better: True
+    full_state_update: False
+    
     def __init__(self, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
-        self.add_state("sparsity", default=torch.tensor(0.0), dist_reduce_fx="mean")
+        self.is_updated = False
+        self.add_state("sparsity", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("num_examples", default=torch.tensor(0), dist_reduce_fx="sum")
         
     def update(self, sparsity):
-        self.sparsity = sparsity
-        
+        self.is_updated = True
+        self.sparsity += sparsity
+        self.num_examples += 1
+    
+    def reset(self) -> None:
+        self.is_updated = False
+        return super().reset()
+                
     def compute(self):
-        return self.sparsity.item()
-
+        if self.is_updated:
+            tens =  self.sparsity / self.num_examples
+        else:
+            tens = torch.tensor(0.0)
+        return tens.item()
+    
 class SmoothStep(nn.Module):
     """A smooth-step function.
     For a scalar x, the smooth-step function is defined as follows:
@@ -270,9 +287,10 @@ class SoftTreeGate(nn.Module):
                 s_avg = torch.mean(s_concat, dim=-1)  # (b, 1, 1)
 
                 # print(s_concat.shape)
-
-                avg_sparsity = torch.mean(s_avg)  # average over batch
-                self.sparsity_metrics.update(avg_sparsity)
+                
+                if not self.training:
+                    avg_sparsity = torch.mean(s_avg)  # average over batch
+                    self.sparsity_metrics.update(avg_sparsity)
 
                 soft_averages = torch.mean(w_permuted, dim=[0, 1, 2])  # (nb_experts,)
                 hard_averages = torch.mean(torch.ones_like(s_concat) - s_concat, dim=[0, 1, 2])  # (nb_experts,)

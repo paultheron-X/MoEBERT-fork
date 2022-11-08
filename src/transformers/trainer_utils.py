@@ -37,6 +37,7 @@ from .file_utils import (
     is_torch_tpu_available,
 )
 
+from .moebert.gates import SoftTreeGate
 
 if is_torch_available():
     import torch
@@ -446,6 +447,16 @@ def denumpify_detensorize(metrics):
         return metrics.item()
     return metrics
 
+def reset_sparsity(model):
+    for name, module in model.named_modules():
+        if isinstance(module, SoftTreeGate):
+            module.sparsity_metric.reset()
+
+def get_sparsity(model):
+    for name, module in model.named_modules():
+        if isinstance(module, SoftTreeGate):
+            return module.sparsity_metrics.compute()
+    return 0.0
 
 class ShardedDDPOption(ExplicitEnum):
     SIMPLE = "simple"

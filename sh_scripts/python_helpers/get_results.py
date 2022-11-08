@@ -14,7 +14,6 @@ def parse_args():
     )
     return parser.parse_args()
 
-num_experiments = 52
 
 datasets_names = ["cola", "sst-2", "mrpc", "qqp", "mnli", "qnli", "rte", "squad", "mnli-bis", "qqp-bis"]
 
@@ -49,6 +48,7 @@ def get_best_result(all_results, train_log, dataset_name):
     return best_score, best_epoch
 
 def main(args):
+    num_experiments = 52 if not args.advanced else 100
     dict_res = {
         "experiment": [i for i in range(num_experiments + 1)],
     }

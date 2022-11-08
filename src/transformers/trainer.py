@@ -65,7 +65,6 @@ from .file_utils import (
 )
 from .modeling_utils import PreTrainedModel, unwrap_model
 from .moebert.utils import process_ffn
-from .moebert.gates import SoftTreeGate
 from .optimization import Adafactor, AdamW, get_scheduler
 from .tokenization_utils_base import PreTrainedTokenizerBase
 from .trainer_callback import (
@@ -108,6 +107,8 @@ from .trainer_utils import (
     get_last_checkpoint,
     set_seed,
     speed_metrics,
+    reset_sparsity,
+    get_sparsity,
 )
 from .training_args import ParallelMode, TrainingArguments
 from .utils import logging
@@ -1073,7 +1074,10 @@ class Trainer:
                 else self.args.max_steps * self.args.gradient_accumulation_steps
             )
             self.control = self.callback_handler.on_epoch_begin(self.args, self.state, self.control)
-
+            
+            reset_sparsity(model=model)
+            self.log({"Just Reseted SParsity at the beginning of the epoch": get_sparsity(model=model)})
+                        
             for step, inputs in enumerate(epoch_iterator):
 
                 # Skip past any already trained steps if resuming training
@@ -1235,11 +1239,6 @@ class Trainer:
             self._total_loss_scalar += tr_loss_scalar
             self._globalstep_last_logged = self.state.global_step
             
-            def get_sparsity(model):
-                for name, module in model.named_modules():
-                    if isinstance(module, SoftTreeGate):
-                        return module.sparsity_metrics.compute()
-                return 0.0
             sparsity = get_sparsity(model)
             
             logs["sparsity"] = sparsity
@@ -1871,12 +1870,12 @@ class Trainer:
         model.eval()
         
         # Reset the sparsity metric
-        def reset_custom_metrics(model):
+        """def reset_custom_metrics(model):
             for name, module in model.named_modules():
                 if isinstance(module, SoftTreeGate):
-                    module.sparsity_metrics.reset()
+                    module.sparsity_metrics.reset()"""
         
-        reset_custom_metrics(model)
+        #reset_custom_metrics(model)
                     
         if is_torch_tpu_available():
             dataloader = pl.ParallelLoader(dataloader, [self.args.device]).per_device_loader(self.args.device)
@@ -1927,7 +1926,7 @@ class Trainer:
             metrics = {}
             
         # Gather the sparsity metrics
-        def gather_custom_metrics(model):
+        """def gather_custom_metrics(model):
             for name, module in model.named_modules():
                 if isinstance(module, SoftTreeGate):
                     sparsity_value = module.sparsity_metrics.compute()
@@ -1936,7 +1935,7 @@ class Trainer:
             return 0.0
         
         metrics["sparsity"] = gather_custom_metrics(model)
-
+"""
         # To be JSON-serializable, we need to remove numpy types or zero-d tensors
         metrics = denumpify_detensorize(metrics)
 
