@@ -37,6 +37,7 @@ def get_best_result(all_results, train_log, dataset_name):
     for ind, dict_ in enumerate(train_log["log_history"]):
         try:
             score = dict_["eval_" + metric_dict[dataset_name]]
+            sparsity = dict_["eval_sparsity"]
         except KeyError:
             continue
         if score > best_score:

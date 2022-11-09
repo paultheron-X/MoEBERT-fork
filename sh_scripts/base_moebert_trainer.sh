@@ -54,7 +54,7 @@ then
     --do_eval \
     --do_predict \
     --max_seq_length 128 \
-    --num_train_epochs 10 \
+    --num_train_epochs 50 \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
     --logging_steps 20 \
