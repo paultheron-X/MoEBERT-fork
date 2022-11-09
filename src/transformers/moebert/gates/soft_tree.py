@@ -24,7 +24,7 @@ class SparsityMetrics(Metric):
         
     def update(self, sparsity):
         self.is_updated = True
-        self.sparsity += sparsity
+        self.sparsity += sparsity.to(self.sparsity.device)
         self.num_examples += 1
     
     def reset(self) -> None:
@@ -288,7 +288,7 @@ class SoftTreeGate(nn.Module):
 
                 # print(s_concat.shape)
                 
-                if not self.training:
+                if self.training:
                     avg_sparsity = torch.mean(s_avg)  # average over batch
                     self.sparsity_metrics.update(avg_sparsity)
 
