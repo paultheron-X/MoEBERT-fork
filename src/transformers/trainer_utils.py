@@ -450,7 +450,7 @@ def denumpify_detensorize(metrics):
 def reset_sparsity(model):
     for name, module in model.named_modules():
         if isinstance(module, SoftTreeGate):
-            module.sparsity_metric.reset()
+            module.sparsity_metrics.reset()
 
 def get_sparsity(model):
     for name, module in model.named_modules():

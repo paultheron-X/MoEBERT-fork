@@ -1076,7 +1076,6 @@ class Trainer:
             self.control = self.callback_handler.on_epoch_begin(self.args, self.state, self.control)
             
             reset_sparsity(model=model)
-            self.log({"Just Reseted SParsity at the beginning of the epoch": get_sparsity(model=model)})
                         
             for step, inputs in enumerate(epoch_iterator):
 
@@ -1925,17 +1924,9 @@ class Trainer:
         else:
             metrics = {}
             
-        # Gather the sparsity metrics
-        """def gather_custom_metrics(model):
-            for name, module in model.named_modules():
-                if isinstance(module, SoftTreeGate):
-                    sparsity_value = module.sparsity_metrics.compute()
-                    module.sparsity_metrics.reset()
-                    return sparsity_value
-            return 0.0
-        
-        metrics["sparsity"] = gather_custom_metrics(model)
-"""
+        # Get the sparsity metric from the beginnig of last epoch, not updated during eval loop
+        metrics["sparsity"] = get_sparsity(model)
+
         # To be JSON-serializable, we need to remove numpy types or zero-d tensors
         metrics = denumpify_detensorize(metrics)
 
