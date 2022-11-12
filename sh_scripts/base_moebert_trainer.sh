@@ -79,7 +79,8 @@ then
     --moebert_gate_entropy $6 \
     --moebert_gate_gamma $7
 else
-    python examples/text-classification/run_glue.py \
+    python -m torch.distributed.launch --nproc_per_node=$num_gpus
+    examples/text-classification/run_glue.py \
     --model_name_or_path $original_model_dir/model \
     --task_name $1 \
     --per_device_train_batch_size $3 \
