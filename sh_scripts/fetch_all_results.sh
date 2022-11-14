@@ -18,7 +18,7 @@ then
     python sh_scripts/python_helpers/get_results.py 
 elif [ $1 = 'allb' ]
 then
-    declare -a StringArray=( "rte" "cola" "mnli" "qqp" "qnli" "rte" "sst-2" "squad" "mnli-bis" "qqp-bis")
+    declare -a StringArray=("cola" "mnli-bis" "mnli" "qqp" "qnli" "sst-2" "squad" "qqp-bis") #"rte"
     for ds in ${StringArray[@]};
     do
         echo "Fetching results for $ds"

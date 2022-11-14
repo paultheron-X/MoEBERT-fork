@@ -107,7 +107,6 @@ class MoELayer(nn.Module):
         # print("hard_averages", hard_averages)
 
         x = y_agg.view(bsz, seq_len, dim)
-        
 
         return x, regularization_loss, s_concat
 
@@ -115,40 +114,20 @@ class MoELayer(nn.Module):
         x_masked = x * attention_mask.unsqueeze(-1)
         x_average = x_masked.sum(1) / attention_mask.unsqueeze(-1).sum(1)
 
-        bsz, seq_len, dim = x_average.size()  # bsz = 1, seq_len = 512, dim = 768
+        bsz, seq_len, dim = x.size()  # bsz = 1, seq_len = 512, dim = 768
 
-        x_average = x_average.view(-1, dim)
-
+        
         def forward_expert(input_x, expert_idx):
             input_x = self.experts[expert_idx].forward(input_x)
             return input_x
 
         h = [forward_expert(x_average, i) for i in range(self.num_experts)]
 
-        y_agg, soft_averages, hard_averages, s_concat = self.gate.forward((h, x_average))
+        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x_average))
 
-        logits_gate = self.gate(x_average)
-        prob_gate = F.softmax(logits_gate, dim=-1)
-        gate = torch.argmax(prob_gate, dim=-1)
+        x = y_agg.view(bsz, seq_len, dim)
 
-        order = gate.argsort(0)
-        num_sentences = F.one_hot(gate, self.num_experts).gt(0).sum(0)
-        gate_load = num_sentences.clone()
-        x = x[order]  # reorder according to expert number
-        x = x.split(num_sentences.tolist(), dim=0)  # a list of length self.num_experts
-
-        prob_gate = prob_gate.gather(dim=1, index=gate.unsqueeze(1))
-        prob_gate = prob_gate[order]
-        prob_gate = prob_gate.split(num_sentences.tolist(), dim=0)
-
-        result = []
-        for i in range(self.num_experts):
-            if x[i].size(0) > 0:
-                result.append(forward_expert(x[i], prob_gate[i], i))
-        result = torch.vstack(result)
-        result = result[order.argsort(0)]  # restore original order
-
-        return result, 0.0, gate_load
+        return x, regularization_loss, s_concat
 
     def _forward_gate_sentence(self, x, attention_mask):
         x_masked = x * attention_mask.unsqueeze(-1)

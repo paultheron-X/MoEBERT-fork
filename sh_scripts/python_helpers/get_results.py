@@ -4,6 +4,7 @@ import json
 import os
 import pandas as pd
 import argparse
+import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -11,6 +12,13 @@ def parse_args():
         '--advanced',
         action='store_true',
         help='If set, the script will also aggregate the results of the advanced experiments'
+    )
+    parser.add_argument(
+        '--sparsity',
+        '-s',
+        action='store_true',
+        help='If set, the script will also aggregate the results of the sparsity experiments',
+        default=False,
     )
     return parser.parse_args()
 
@@ -31,7 +39,7 @@ metric_dict = {
 }
 
 
-def get_best_result(all_results, train_log, dataset_name):
+def get_best_result(all_results, train_log, dataset_name, spars_):
     best_score = 0
     best_epoch = 0
     for ind, dict_ in enumerate(train_log["log_history"]):
@@ -40,9 +48,15 @@ def get_best_result(all_results, train_log, dataset_name):
             sparsity = dict_["eval_sparsity"]
         except KeyError:
             continue
-        if score > best_score:
-            best_score = score
-            best_epoch = dict_["epoch"]
+        if not spars_:
+            if score > best_score:
+                best_score = score
+                best_epoch = dict_["epoch"]
+        else:
+            if score > best_score and np.abs(sparsity - 0.75) < 0.1:
+                best_score = score
+                best_epoch = dict_["epoch"]
+
     if best_score == 0:
         best_score = all_results["eval_" + metric_dict[dataset_name]]
         best_epoch = all_results["epoch"]
@@ -82,7 +96,7 @@ def main(args):
                         train_log = json.load(f)
                 except FileNotFoundError:
                     train_log = {"log_history": []}
-                best_score, best_epoch = get_best_result(all_results, train_log, dataset_name)
+                best_score, best_epoch = get_best_result(all_results, train_log, dataset_name, spars_ = args.sparsity)
                 best_score = round(best_score, 4)
 
                 dict_res_dataset[dataset_name + "_best_epoch"].append(best_epoch)
@@ -90,7 +104,10 @@ def main(args):
 
             dataset_df = pd.DataFrame(dict_res_dataset)
             if args.advanced:
-                dataset_df.to_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv", index=False)
+                if args.sparsity:
+                    dataset_df.to_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv", index=False)
+                else:
+                    dataset_df.to_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv", index=False)
             else :    
                 dataset_df.to_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
 
@@ -99,9 +116,14 @@ def main(args):
     for dataset_name in datasets_names:
         try:
             if args.advanced:
-                df_fin = df_fin.merge(
-                    pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv"), on="experiment"
-                )            
+                if args.sparsity:
+                    df_fin = df_fin.merge(
+                        pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv"), on="experiment"
+                    )
+                else:
+                    df_fin = df_fin.merge(
+                        pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv"), on="experiment"
+                    )            
             else:
                 df_fin = df_fin.merge(
                     pd.read_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv"), on="experiment"
@@ -109,7 +131,10 @@ def main(args):
         except FileNotFoundError:
             pass
     if args.advanced:
-        df_fin.to_csv("results_gcloud/moebert_results_aggregated.csv", index=False)
+        if args.sparsity:
+            df_fin.to_csv("results_gcloud/moebert_results_aggregated_sparsity.csv", index=False)
+        else:
+            df_fin.to_csv("results_gcloud/moebert_results_aggregated.csv", index=False)
     else:
         df_fin.to_csv("results_gcloud/results_aggregated.csv", index=False)
     
