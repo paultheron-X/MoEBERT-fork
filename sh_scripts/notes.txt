@@ -1,0 +1,11 @@
+mnli -> mnli 2
+mnli-bis-> mnli 4/5
+rte -> mnli 3
+cola -> cola 1/2/3/4
+qqp -> qqp 1
+qqp-bis -> qqp 4
+qqp-bis-bis -> qqp 3 + 5
+qnli -> qnli 1
+qnli-bis -> qnli 4 (WARNING ERROR ON LAST)
+squad -> mrpc 1/2/3
+sst-2 -> sst-2 1/2

@@ -6,24 +6,46 @@ import pandas as pd
 import argparse
 import numpy as np
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--advanced',
-        action='store_true',
-        help='If set, the script will also aggregate the results of the advanced experiments'
+        "--advanced",
+        action="store_true",
+        help="If set, the script will also aggregate the results of the advanced experiments",
     )
     parser.add_argument(
-        '--sparsity',
-        '-s',
-        action='store_true',
-        help='If set, the script will also aggregate the results of the sparsity experiments',
+        "--sparsity",
+        "-s",
+        action="store_true",
+        help="If set, the script will also aggregate the results of the sparsity experiments",
+        default=False,
+    )
+    parser.add_argument(
+        "--aggregate",
+        "-a",
+        action="store_true",
+        help="If set, the script will aggregate the results of the experiments",
         default=False,
     )
     return parser.parse_args()
 
 
-datasets_names = ["cola", "sst-2", "mrpc", "qqp", "mnli", "qnli", "rte", "squad", "mnli-bis", "qqp-bis"]
+datasets_names = [
+    "cola",
+    "sst-2",
+    "mrpc",
+    "qqp",
+    "mnli",
+    "qnli",
+    "rte",
+    "squad",
+    "mnli-bis",
+    "qqp-bis",
+    "qnli-bis",
+    "rte-true",
+    "qqp-bis-bis"
+]
 
 metric_dict = {
     "cola": "matthews_correlation",
@@ -35,11 +57,14 @@ metric_dict = {
     "rte": "accuracy",
     "squad": "f1",
     "mnli-bis": "accuracy",
-    "qqp-bis": "f1"
+    "qqp-bis": "f1",
+    "qnli-bis": "accuracy",
+    "rte-true": "accuracy",
+    "qqp-bis-bis": "f1",
 }
 
 
-def get_best_result(all_results, train_log, dataset_name, spars_):
+def get_best_result_json(all_results, train_log, dataset_name, spars_):
     best_score = 0
     best_epoch = 0
     for ind, dict_ in enumerate(train_log["log_history"]):
@@ -62,7 +87,8 @@ def get_best_result(all_results, train_log, dataset_name, spars_):
         best_epoch = all_results["epoch"]
     return best_score, best_epoch
 
-def main(args):
+
+def generate_best_results_table(args):
     num_experiments = 52 if not args.advanced else 100
     dict_res = {
         "experiment": [i for i in range(num_experiments + 1)],
@@ -96,7 +122,9 @@ def main(args):
                         train_log = json.load(f)
                 except FileNotFoundError:
                     train_log = {"log_history": []}
-                best_score, best_epoch = get_best_result(all_results, train_log, dataset_name, spars_ = args.sparsity)
+                best_score, best_epoch = get_best_result_json(
+                    all_results, train_log, dataset_name, spars_=args.sparsity
+                )
                 best_score = round(best_score, 4)
 
                 dict_res_dataset[dataset_name + "_best_epoch"].append(best_epoch)
@@ -105,10 +133,15 @@ def main(args):
             dataset_df = pd.DataFrame(dict_res_dataset)
             if args.advanced:
                 if args.sparsity:
-                    dataset_df.to_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv", index=False)
+                    dataset_df.to_csv(
+                        f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv",
+                        index=False,
+                    )
                 else:
-                    dataset_df.to_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv", index=False)
-            else :    
+                    dataset_df.to_csv(
+                        f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv", index=False
+                    )
+            else:
                 dataset_df.to_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
 
     # aggregate results
@@ -118,15 +151,20 @@ def main(args):
             if args.advanced:
                 if args.sparsity:
                     df_fin = df_fin.merge(
-                        pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv"), on="experiment"
+                        pd.read_csv(
+                            f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv"
+                        ),
+                        on="experiment",
                     )
                 else:
                     df_fin = df_fin.merge(
-                        pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv"), on="experiment"
-                    )            
+                        pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv"),
+                        on="experiment",
+                    )
             else:
                 df_fin = df_fin.merge(
-                    pd.read_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv"), on="experiment"
+                    pd.read_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv"),
+                    on="experiment",
                 )
         except FileNotFoundError:
             pass
@@ -137,8 +175,63 @@ def main(args):
             df_fin.to_csv("results_gcloud/moebert_results_aggregated.csv", index=False)
     else:
         df_fin.to_csv("results_gcloud/results_aggregated.csv", index=False)
-    
+
+
+def generate_best_results_summary(args):
+    if not args.advanced:
+        raise NotImplementedError("This function is not implemented for the basic experiments")
+    else:
+        moebert_sparsity = pd.read_csv("results_gcloud/moebert_results_aggregated_sparsity.csv")
+        moebert = pd.read_csv("results_gcloud/moebert_results_aggregated.csv")
+        res_sparsity = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
+        res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
+        for dataset_name in datasets_names:
+            try:
+                indice_best = moebert_sparsity[dataset_name + "_best_metric"].idxmax()
+                best_epoch = moebert_sparsity[dataset_name + "_best_epoch"][indice_best]
+                best_metric = moebert_sparsity[dataset_name + "_best_metric"][indice_best]
+                best_experiment = moebert_sparsity["experiment"][indice_best]
+                res_sparsity = pd.concat(
+                    [
+                        res_sparsity,
+                        pd.DataFrame(
+                            [[dataset_name, best_epoch, best_metric, best_experiment]],
+                            columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
+                        ),
+                    ],
+                    ignore_index=True,
+                )
+            except KeyError:
+                pass
+            try:
+                indice_best = moebert[dataset_name + "_best_metric"].idxmax()
+                best_epoch = moebert[dataset_name + "_best_epoch"][indice_best]
+                best_metric = moebert[dataset_name + "_best_metric"][indice_best]
+                best_experiment = moebert["experiment"][indice_best]
+                res = pd.concat(
+                    [
+                        res,
+                        pd.DataFrame(
+                            [[dataset_name, best_epoch, best_metric, best_experiment]],
+                            columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
+                        ),
+                    ],
+                    ignore_index=True,
+                )
+            except KeyError:
+                pass
+        res_sparsity.to_csv("results_gcloud/moebert_results_aggregated_sparsity_summary.csv", index=False)
+        res.to_csv("results_gcloud/moebert_results_aggregated_summary.csv", index=False)
+
+
+def main(args):
+
+    generate_best_results_table(args)
+    if args.aggregate:
+        generate_best_results_summary(args)
+
+
 if __name__ == "__main__":
-    args  = parse_args()
-    
+    args = parse_args()
+
     main(args)
