@@ -5,7 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .gates.soft_tree import SoftTreeGate
+from .gates import SoftTreeGate, SoftTreePermutedGate
+from .permutations import NoPermutations
 
 
 class MoELayer(nn.Module):
@@ -32,7 +33,23 @@ class MoELayer(nn.Module):
             }
             self.gate = SoftTreeGate(config)
             pass
-
+        elif route_method in ["soft-tree-perm"]:
+            config = {
+                "k": 1,
+                "nb_experts": 4,
+                "gamma": gamma, # gamma = [0.01, 0.1, 1]
+                "input_dim": hidden_size,
+                "temperature": 1.0,
+                "entropy_reg": entropy_reg, # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
+                #"temperature": 1.0, 
+            }
+            self.gate = SoftTreePermutedGate(config)
+            config_perm = {
+                "nb_experts": 4,
+                "k": 1,
+            }
+            self.gate_perm = NoPermutations(config_perm)
+        
         else:
             raise KeyError("Routing method not supported.")
 
@@ -87,6 +104,33 @@ class MoELayer(nn.Module):
 
     def _forward_soft_tree_gate(self, x):
         bsz, seq_len, dim = x.size()  # bsz = 1, seq_len = 512, dim = 768
+
+        x = x.view(-1, dim)
+
+        def forward_expert(input_x, expert_idx):
+            input_x = self.experts[expert_idx].forward(input_x)
+            return input_x
+
+        h = [forward_expert(x, i) for i in range(self.num_experts)]
+
+        # pass the hidden states to the gate
+        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x))
+        # print("y_agg", y_agg.shape)
+        # print("soft_averages", soft_averages.shape)
+        # print("hard_averages", hard_averages.shape)
+
+        # print(y_agg)
+        # print("soft_averages", soft_averages)
+        # print("hard_averages", hard_averages)
+
+        x = y_agg.view(bsz, seq_len, dim)
+
+        return x, regularization_loss, s_concat
+    
+    def _forward_soft_tree_gate_perm(self, x):
+        bsz, seq_len, dim = x.size()  # bsz = 1, seq_len = 512, dim = 768
+        
+        perm = self.gate_perm.forward(x)
 
         x = x.view(-1, dim)
 
@@ -205,6 +249,8 @@ class MoELayer(nn.Module):
             # find the meaning of these functions, when is it used? and meaning of variables
         elif self.route_method == "soft-tree":
             x, balance_loss, gate_load = self._forward_soft_tree_gate(x)
+        elif self.route_method == "soft-tree-perm":
+            x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
         elif self.route_method == "soft-tree-sentence":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_sentence(x, attention_mask)
         elif self.route_method == "gate-sentence":

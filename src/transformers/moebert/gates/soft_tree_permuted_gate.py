@@ -12,7 +12,8 @@ EPSILON = 1e-6
 
 from .utils import SparsityMetrics, SmoothStep
 
-class SoftTreeGate(nn.Module):
+
+class SoftTreePermutedGate(nn.Module):
     """An ensemble of soft decision trees.
 
     The layer returns the sum of the decision trees in the ensemble.
@@ -45,7 +46,7 @@ class SoftTreeGate(nn.Module):
           leaf_dims: The dimension of the output vector.
           gamma: The scaling parameter for the smooth-step function.
         """
-        super(SoftTreeGate, self).__init__()
+        super(SoftTreePermutedGate, self).__init__()
 
         self.nb_experts = config["nb_experts"]
         self.max_depth = (int)(np.ceil(np.log2(self.nb_experts)))
@@ -80,13 +81,13 @@ class SoftTreeGate(nn.Module):
             self.selector_layer = nn.Linear(self.input_dim, self.k, bias=False)
             self.selector_layer.weight = self._z_initializer(self.selector_layer.weight)
 
-            self.left_child = SoftTreeGate(
+            self.left_child = SoftTreePermutedGate(
                 config,
                 node_index=2 * node_index + 1,
                 depth_index=depth_index + 1,
                 name="Node-Left",
             )
-            self.right_child = SoftTreeGate(
+            self.right_child = SoftTreePermutedGate(
                 config,
                 node_index=2 * node_index + 2,
                 depth_index=depth_index + 1,
@@ -159,7 +160,7 @@ class SoftTreeGate(nn.Module):
         regularization_loss = 0.0
 
         # h, x, permutation_weights = inputs
-        h, x = inputs
+        h, x, permutation_weights = inputs
 
         # #print("\ninput of softmax gate: ",len(h), h[0].shape, x.shape)
         assert all([h[i].shape[1] == h[i + 1].shape[1] for i in range(len(h) - 1)])
@@ -212,7 +213,7 @@ class SoftTreeGate(nn.Module):
 
                 # w_concat: (b, 1, k, nb_experts), perm_mask: [k, nb_experts, nb_experts]
 
-                w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, self.permutation_mask.to(w_concat.device))
+                w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, permutation_weights)
                 w_permuted = torch.sum(w_permuted, dim=2, keepdim=True)  # (b, 1, 1, nb_experts)
                 w_permuted = w_permuted / torch.sum(w_permuted, dim=-1, keepdim=True)  # (b, 1, 1, nb_experts)
 

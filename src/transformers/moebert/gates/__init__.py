@@ -1,6 +1,2 @@
 from .soft_tree import SoftTreeGate
-
-
-GatesMapper = {
-    "soft_tree": SoftTreeGate,
-}
+from .soft_tree_permuted_gate import SoftTreePermutedGate
