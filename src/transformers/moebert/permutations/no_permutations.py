@@ -27,8 +27,9 @@ class NoPermutations(torch.nn.Module):
         )
 
     def forward(self, inputs):
+        x = inputs
 
-        trace_RRT = torch.trace(
+        """ trace_RRT = torch.trace(
             torch.matmul(self.permutation_weights, torch.transpose(self.permutation_weights, 1, 2))
         )
         trace_RTR = torch.trace(
@@ -36,6 +37,6 @@ class NoPermutations(torch.nn.Module):
         )
         #             self.add_metric(torch.mean(trace_RRT), name
         print("=========trace_RRT:", trace_RRT)
-        print("=========trace_RTR:", trace_RTR)
+        print("=========trace_RTR:", trace_RTR)"""
 
-        return self.permutation_weights, 0
+        return self.permutation_weights.to(x.device), 0

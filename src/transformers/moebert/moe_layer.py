@@ -25,11 +25,11 @@ class MoELayer(nn.Module):
             config = {
                 "k": 1,
                 "nb_experts": 4,
-                "gamma": gamma, # gamma = [0.01, 0.1, 1]
+                "gamma": gamma,  # gamma = [0.01, 0.1, 1]
                 "input_dim": hidden_size,
                 "temperature": 1.0,
-                "entropy_reg": entropy_reg, # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
-                #"temperature": 1.0, 
+                "entropy_reg": entropy_reg,  # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
+                # "temperature": 1.0,
             }
             self.gate = SoftTreeGate(config)
             pass
@@ -37,11 +37,11 @@ class MoELayer(nn.Module):
             config = {
                 "k": 1,
                 "nb_experts": 4,
-                "gamma": gamma, # gamma = [0.01, 0.1, 1]
+                "gamma": gamma,  # gamma = [0.01, 0.1, 1]
                 "input_dim": hidden_size,
                 "temperature": 1.0,
-                "entropy_reg": entropy_reg, # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
-                #"temperature": 1.0, 
+                "entropy_reg": entropy_reg,  # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
+                # "temperature": 1.0,
             }
             self.gate = SoftTreePermutedGate(config)
             config_perm = {
@@ -49,7 +49,7 @@ class MoELayer(nn.Module):
                 "k": 1,
             }
             self.gate_perm = NoPermutations(config_perm)
-        
+
         else:
             raise KeyError("Routing method not supported.")
 
@@ -126,10 +126,10 @@ class MoELayer(nn.Module):
         x = y_agg.view(bsz, seq_len, dim)
 
         return x, regularization_loss, s_concat
-    
+
     def _forward_soft_tree_gate_perm(self, x):
         bsz, seq_len, dim = x.size()  # bsz = 1, seq_len = 512, dim = 768
-        
+
         perm, reg = self.gate_perm.forward(x)
 
         x = x.view(-1, dim)
@@ -141,7 +141,7 @@ class MoELayer(nn.Module):
         h = [forward_expert(x, i) for i in range(self.num_experts)]
 
         # pass the hidden states to the gate
-        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x))
+        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x, perm))
         # print("y_agg", y_agg.shape)
         # print("soft_averages", soft_averages.shape)
         # print("hard_averages", hard_averages.shape)
@@ -160,7 +160,6 @@ class MoELayer(nn.Module):
 
         bsz, seq_len, dim = x.size()  # bsz = 1, seq_len = 512, dim = 768
 
-        
         def forward_expert(input_x, expert_idx):
             input_x = self.experts[expert_idx].forward(input_x)
             return input_x
