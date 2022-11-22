@@ -38,4 +38,4 @@ class NoPermutations(torch.nn.Module):
         print("=========trace_RRT:", trace_RRT)
         print("=========trace_RTR:", trace_RTR)
 
-        return self.permutation_weights
+        return self.permutation_weights, 0

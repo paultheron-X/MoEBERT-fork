@@ -130,7 +130,7 @@ class MoELayer(nn.Module):
     def _forward_soft_tree_gate_perm(self, x):
         bsz, seq_len, dim = x.size()  # bsz = 1, seq_len = 512, dim = 768
         
-        perm = self.gate_perm.forward(x)
+        perm, reg = self.gate_perm.forward(x)
 
         x = x.view(-1, dim)
 
@@ -152,7 +152,7 @@ class MoELayer(nn.Module):
 
         x = y_agg.view(bsz, seq_len, dim)
 
-        return x, regularization_loss, s_concat
+        return x, regularization_loss + reg, s_concat
 
     def _forward_soft_tree_gate_sentence(self, x, attention_mask):
         x_masked = x * attention_mask.unsqueeze(-1)
