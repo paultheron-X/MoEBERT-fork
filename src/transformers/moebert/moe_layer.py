@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .gates import SoftTreeGate, SoftTreePermutedGate
-from .permutations import NoPermutations
+from .permutations import NoPermutations, LearnPermutations
 
 
 class MoELayer(nn.Module):
@@ -47,8 +47,15 @@ class MoELayer(nn.Module):
             config_perm = {
                 "nb_experts": 4,
                 "k": 1,
+                "steps_per_epoch" : 1000,
+                "epochs_for_learning_permutation": 1.0,
+                "learn_k_permutations" : 1,
+                "noise_factor" : 0.05,
+                "perm_entropy_reg" : 1e-1
+
             }
-            self.gate_perm = NoPermutations(config_perm)
+            #self.gate_perm = NoPermutations(config_perm)
+            self.gate_perm = LearnPermutations(config_perm)
 
         else:
             raise KeyError("Routing method not supported.")

@@ -51,6 +51,8 @@ class LearnPermutations(nn.Module):
 
         self.noise_factor = config["noise_factor"]
         self.perm_entropy_reg = config["perm_entropy_reg"]
+        
+        self.iterations = torch.tensor(0, dtype=torch.int32)
 
         self.permutation_weights = torch.nn.Parameter(
             torch.tensor(
@@ -109,8 +111,8 @@ class LearnPermutations(nn.Module):
     def _generate_mask_per_permutation(self, permutation_weights):
         permutation_weights = torch.squeeze(permutation_weights)
         cost = -permutation_weights
-        row_ind, col_ind = scipy.optimize.linear_sum_assignment(cost)
-        permutation_mask = torch.gather(torch.eye(permutation_weights.shape[-1]), col_ind, dim=0)
+        row_ind, col_ind = scipy.optimize.linear_sum_assignment(cost.cpu().detach().numpy())
+        permutation_mask = torch.gather(torch.eye(permutation_weights.shape[-1]), index = torch.tensor(col_ind), dim=0)
         return permutation_mask
 
     def _get_permutation_mask(self, permutation_weights):
@@ -192,7 +194,7 @@ class LearnPermutations(nn.Module):
             increment = torch.ones_like(self.iterations)
         else:
             increment = torch.zeros_like(self.iterations)
-        self.iterations.assign_add(increment)
+        self.iterations += increment
         
         if training:
             permutation_weights = self._get_permutation_during_learning_and_after_learning(self.iterations)
