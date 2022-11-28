@@ -43,7 +43,12 @@ fi
 
 if [ ${11} = 'True' ]
 then
-    export num_epochs=15
+    if [ $1 = 'sst2']
+    then
+        export num_epochs=25
+    else
+        export num_epochs=15
+    fi
 else
     export num_epochs=10
 fi
