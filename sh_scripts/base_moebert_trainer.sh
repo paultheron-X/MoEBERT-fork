@@ -13,6 +13,7 @@ echo "gamma is $7"
 echo "distillation penalty is $8"
 echo "eval steps is $9"
 echo "1st stage best epoch is ${10}"
+echo "Mode large is ${11}"
 
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
@@ -29,7 +30,6 @@ then
 elif [ $1 = 'sst2' ]
 then
     export metric_for_best_model="accuracy"
-
 elif [ $1 = 'qqp' ]
 then
     export metric_for_best_model="f1"
@@ -41,6 +41,14 @@ then
     export metric_for_best_model="accuracy"
 fi
 
+if [ ${11} = 'True' ]
+then
+    export num_epochs=15
+else
+    export num_epochs=10
+fi
+
+echo "Number of epochs is $num_epochs"
 
 if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
 then
@@ -90,7 +98,7 @@ else
     --do_eval \
     --do_predict \
     --max_seq_length 128 \
-    --num_train_epochs 10 \
+    --num_train_epochs $num_epochs \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
     --logging_steps 20 \

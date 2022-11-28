@@ -26,6 +26,11 @@ def _parse_args():
         default="1",
         help="Number of the job to launch",
     )
+    parser.add_argument(
+        "--exp",
+        "-e",
+        help="Number of the experiment to launch (overrides --num in the result)",
+    )
     return parser.parse_args()
 
 
@@ -33,6 +38,11 @@ args = _parse_args()
 
 jobs_params = hyper_params.loc[int(args.num)]
 
-print(
-    f"{jobs_params.name} {int(jobs_params.batch_size)} {jobs_params.weight_decay} {jobs_params.learning_rate} {jobs_params.entropy} {jobs_params.gamma} {jobs_params.distill}"
-)
+if args.exp is not None:
+    print(
+        f"{int(args.exp)} {int(jobs_params.batch_size)} {jobs_params.weight_decay} {jobs_params.learning_rate} {jobs_params.entropy} {jobs_params.gamma} {jobs_params.distill}"
+    )
+else:
+    print(
+        f"{jobs_params.name} {int(jobs_params.batch_size)} {jobs_params.weight_decay} {jobs_params.learning_rate} {jobs_params.entropy} {jobs_params.gamma} {jobs_params.distill}"
+    )
