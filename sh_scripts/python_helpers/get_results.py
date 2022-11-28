@@ -35,15 +35,15 @@ datasets_names = [
     "cola",
     "sst-2",
     "mrpc",
-    "qqp",
-    "mnli",
-    "qnli",
-    "rte",
     "squad",
-    "mnli-bis",
-    "qqp-bis",
-    "qnli-bis",
     "rte-true",
+    "rte",
+    "mnli",
+    "mnli-bis",
+    "qnli",
+    "qnli-bis",
+    "qqp",
+    "qqp-bis",
     "qqp-bis-bis"
 ]
 

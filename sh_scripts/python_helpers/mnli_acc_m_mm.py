@@ -30,8 +30,8 @@ def parse_args():
 
 mnli_names = [
     "mnli",
-    "rte",
     "mnli-bis",
+    "rte",
 ]
 
 metric_dict = {

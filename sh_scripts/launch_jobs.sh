@@ -30,5 +30,10 @@ then
 elif [ $1 = 'qnli' ]
 then
     bash sh_scripts/hyper_param_distil_metatuner.sh qnli $2 3e-5 16 0 9
+elif [ $1 = 'mrpcbig' ]
+then
+    bash sh_scripts/hyper_param_distil_metatuner.sh mrpc 3 4e-5 8 0 2
+    bash sh_scripts/hyper_param_distil_metatuner.sh mrpc 4 4e-5 8 0 2
+    bash sh_scripts/hyper_param_distil_metatuner.sh mrpc 5 4e-5 8 0 2
 fi
 
