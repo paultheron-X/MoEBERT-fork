@@ -9,6 +9,17 @@ then
 elif [ $1 = "sst2" ]
 then
     export eval_steps=1000
+
+    args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n 2 --exp 101)
+    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps 11 True
+    args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n 4 --exp 102)
+    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps 7 True
+    args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n 44 --exp 103)
+    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps 35 True
+    args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n 64 --exp 104)
+    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps 56 True
+    args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n 100 --exp 105)
+    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps 16 True
 elif [ $1 = "mnli" ]
 then
     export eval_steps=2000
