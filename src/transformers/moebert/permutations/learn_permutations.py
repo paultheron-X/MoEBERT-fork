@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import numpy as np
 import math
 
+torch.autograd.set_detect_anomaly(True)
 
 class LearnPermutations(nn.Module):
     """Learn permutations.
@@ -51,7 +52,7 @@ class LearnPermutations(nn.Module):
 
         self.noise_factor = config["noise_factor"]
         self.perm_entropy_reg = config["perm_entropy_reg"]
-        
+
         self.iterations = torch.tensor(0, dtype=torch.int32)
 
         self.permutation_weights = torch.nn.Parameter(
@@ -98,10 +99,10 @@ class LearnPermutations(nn.Module):
         log_alpha = torch.reshape(log_alpha, (batch_size, n, n))
         log_alpha_w_noise = torch.tile(log_alpha, (n_samples, 1, 1))
         if noise_factor == 0.0:
-            noise = 0.0
+            noise = torch.tensor(0.0, dtype=torch.float32)
         else:
             noise = self._sample_gumbel([n_samples * batch_size, n, n]) * noise_factor
-
+        noise = noise.to(log_alpha.device)
         log_alpha_w_noise += noise
         log_alpha_w_noise /= temp
         sink = self._sinkhorn(log_alpha_w_noise, n_iters)
@@ -112,13 +113,13 @@ class LearnPermutations(nn.Module):
         permutation_weights = torch.squeeze(permutation_weights)
         cost = -permutation_weights
         row_ind, col_ind = scipy.optimize.linear_sum_assignment(cost.cpu().detach().numpy())
-        permutation_mask = torch.gather(torch.eye(permutation_weights.shape[-1]), index = torch.tensor(col_ind), dim=0)
+        permutation_mask = torch.eye(permutation_weights.shape[-1])[torch.tensor(col_ind)]
         return permutation_mask
 
     def _get_permutation_mask(self, permutation_weights):
         permutation_weights_list = torch.split(permutation_weights, self.no_of_permutations)
         permutation_masks_list = [self._generate_mask_per_permutation(perm) for perm in permutation_weights_list]
-        permutation_masks = torch.stack(permutation_masks_list)
+        permutation_masks = torch.stack(permutation_masks_list).to(permutation_weights.device)
         return permutation_masks
 
     def _compute_permutation_entropy_regularization(
@@ -137,21 +138,18 @@ class LearnPermutations(nn.Module):
     def _get_permutation_during_training(
         self,
         permutation_log_weights,
-        noise_factor = 0.01,
+        noise_factor=0.01,
     ):
-        log_tau = torch.tensor(
+        log_tau = (
             np.log10(self.tau_initial)
             + (np.log10(self.tau_final) - np.log10(self.tau_initial))
-            * self.iteration / self.iterations_for_learning_permutation,
-            dtype=torch.float32,    
+            * self.iterations
+            / self.iterations_for_learning_permutation
         )
+
         tau = torch.pow(10.0, log_tau)
-        n_iters = torch.tensor(
-            1
-            + (20 - 1)
-            * self.iteration / self.iterations_for_learning_permutation,
-            dtype=torch.float32,
-        )
+        n_iters = 1 + (20 - 1) * self.iterations / self.iterations_for_learning_permutation
+
         n_iters = torch.clamp(n_iters, 1, 20)
         n_iters = n_iters.long()
         permutation_weights = self._gumbel_sinkhorn(
@@ -162,14 +160,12 @@ class LearnPermutations(nn.Module):
             n_iters=n_iters,
             squeeze=True,
         )
-        
-        self.permutation_weights.assign(permutation_weights)
+        self.permutation_weights = permutation_weights
 
         return permutation_weights
-    
 
     def _get_permutation_during_inference(
-         self,
+        self,
         permutation_weights,
     ):
         permutation_weights = self._get_permutation_mask(permutation_weights)
@@ -177,37 +173,43 @@ class LearnPermutations(nn.Module):
         return permutation_weights
 
     def _get_permutation_during_learning_and_after_learning(self, iterations):
-        norm = torch.linalg.norm(
-            self._get_permutation_during_inference(self.permutation_weights) - self.permutation_weights, dim=(1, 2)
-        )
+        # norm = torch.linalg.norm(
+        #    self._get_permutation_during_inference(self.permutation_weights) - self.permutation_weights, dim=(1, 2)
+        # )
+        
+        #print(self._get_permutation_during_inference(self.permutation_weights).device)
+        
         permutation_weights = torch.where(
-            iterations < torch.tensor(self.iterations_for_learning_permutation, dtype=torch.iterations.dtype),
-            lambda: self._get_permutation_during_training(self.permutation_log_weights, noise_factor=self.noise_factor),
-            lambda: self._get_permutation_during_inference(self.permutation_weights),
+            torch.less(
+                iterations, torch.tensor(self.iterations_for_learning_permutation, dtype=self.iterations.dtype).to(self.permutation_weights.device)
+            ),
+            self._get_permutation_during_training(self.permutation_log_weights, noise_factor=self.noise_factor),
+            self._get_permutation_during_inference(self.permutation_weights),
         )
         return permutation_weights
 
     def forward(self, inputs):
         training = self.training
-        
+
         if training:
             increment = torch.ones_like(self.iterations)
         else:
             increment = torch.zeros_like(self.iterations)
         self.iterations += increment
-        
+
         if training:
             permutation_weights = self._get_permutation_during_learning_and_after_learning(self.iterations)
         else:
             permutation_weights = self._get_permutation_during_inference(self.permutation_weights)
-        
+
         if training:
-            explicit_perm_entropy_regularization = self._compute_permutation_entropy_regularization(permutation_weights)
+            explicit_perm_entropy_regularization = self._compute_permutation_entropy_regularization(
+                permutation_weights
+            )
         else:
             explicit_perm_entropy_regularization = torch.zeros_like(())
 
         if not self.learn_k_permutations:
             permutation_weights = torch.tile(permutation_weights, torch.tensor([self.k, 1, 1]))
-        
-        return permutation_weights, self.perm_entropy_reg*explicit_perm_entropy_regularization
 
+        return permutation_weights, self.perm_entropy_reg * explicit_perm_entropy_regularization
