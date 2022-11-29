@@ -43,7 +43,7 @@ fi
 
 if [ ${11} = 'True' ]
 then
-    if [ $1 = 'sst2']
+    if [ $1 = 'sst2' ]
     then
         export num_epochs=25
     else
