@@ -51,10 +51,10 @@ class MoEBertLayer(BertLayer):
         if self.add_cross_attention:
             assert self.is_decoder, f"{self} should be used as a decoder model if cross attention is added"
             self.crossattention = BertAttention(config)
-        self.intermediate = BertIntermediate(config)
+        self.intermediate = BertIntermediate(config) # Used when MoE Importance is called (preprocess)
         self.output = BertOutput(config)
 
-        # construct experts
+        # construct experts this replace the Bert intermediate layer, which is a feed forward layer 
         self.use_experts = use_experts(layer_idx)
         dropout = config.moebert_expert_dropout if self.use_experts else config.hidden_dropout_prob
         if self.use_experts:

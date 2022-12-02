@@ -22,14 +22,11 @@ class LearnPermutations(nn.Module):
     def __init__(
         self,
         config,
-        node_index=0,
     ):
 
         super(LearnPermutations, self).__init__()
         self.nb_experts = config["nb_experts"]
         self.k = config["k"]
-
-        self.node_index = node_index
 
         self.tau_initial = 1e-3
         self.tau_final = 1e-7
@@ -41,7 +38,7 @@ class LearnPermutations(nn.Module):
             dtype=torch.float32,
         )
         self.n_iters_ref = torch.tensor(
-            np.linspace(1, 20, num=2),
+            np.linspace(20, 150, num=2),
             dtype=torch.float32,
         )
 

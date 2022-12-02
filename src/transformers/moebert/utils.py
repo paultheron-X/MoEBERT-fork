@@ -65,6 +65,7 @@ class ImportanceProcessor:
 
     def load_experts(self, model_layer):
         expert_list = model_layer.experts.experts
+        print(expert_list)
         fc1_weight_data = model_layer.intermediate.dense.weight.data
         fc1_bias_data = model_layer.intermediate.dense.bias.data
         fc2_weight_data = model_layer.output.dense.weight.data
