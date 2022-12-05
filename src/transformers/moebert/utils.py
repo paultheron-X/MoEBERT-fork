@@ -158,6 +158,7 @@ class FeedForwardPermutation(nn.Module):
         input_tensor = hidden_states
         print("hidden_states", hidden_states.shape)
         Ah = self.fc1(hidden_states)
+        Ah = self.intermediate_act_fn(Ah)
         # multiply by permutation matrix to get s (beware of the batch dimension)
         s = torch.matmul(permutations, Ah.transpose(0,1)) # (3072, 3072) * (3072, batch_size) = (1, 3072, batch_size)
         s = s.squeeze(0) # (3072, batch_size)
