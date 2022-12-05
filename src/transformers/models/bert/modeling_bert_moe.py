@@ -55,7 +55,9 @@ class MoEBertLayer(BertLayer):
         self.output = BertOutput(config)
 
         # construct experts this replace the Bert intermediate layer, which is a feed forward layer 
-        self.use_experts = use_experts(layer_idx)
+        perm = "perm" in config.moebert_route_method
+        self.perm = perm
+        self.use_experts = use_experts(layer_idx, perm)
         dropout = config.moebert_expert_dropout if self.use_experts else config.hidden_dropout_prob
         if self.use_experts:
             ffn = FeedForward(config, config.moebert_expert_dim, dropout)
@@ -70,8 +72,40 @@ class MoEBertLayer(BertLayer):
                 entropy_reg=config.moebert_gate_entropy,
             )
             self.importance_processor = ImportanceProcessor(config, layer_idx, config.moebert_expert_num, 0)
+        elif self.perm:
+            ffn = FeedForward(config, config.intermediate_size, dropout)
+            self.experts = MoELayer(
+                hidden_size=config.hidden_size,
+                expert=ffn,
+                num_experts=1,
+                route_method=config.moebert_route_method,
+                vocab_size=config.vocab_size,
+                hash_list=config.moebert_route_hash_list,
+                gamma=config.moebert_gate_gamma,
+                entropy_reg=config.moebert_gate_entropy,
+            )
         else:
+            # This is the original feed forward layer
+            # Add the code here to replace it 
             self.experts = FeedForward(config, config.intermediate_size, dropout)
+    
+    def _init_experts(self, model_layer):
+        expert_list = model_layer.experts.experts
+        fc1_weight_data = model_layer.intermediate.dense.weight.data
+        fc1_bias_data = model_layer.intermediate.dense.bias.data
+        fc2_weight_data = model_layer.output.dense.weight.data
+        fc2_bias_data = model_layer.output.dense.bias.data
+        layernorm_weight_data = model_layer.output.LayerNorm.weight.data
+        layernorm_bias_data = model_layer.output.LayerNorm.bias.data
+        expert_list[0].fc1.weight.data = fc1_weight_data.clone()
+        expert_list[0].fc1.bias.data = fc1_bias_data.clone()
+        expert_list[0].fc2.weight.data = fc2_weight_data.clone()
+        expert_list[0].fc2.bias.data = fc2_bias_data.clone()
+        expert_list[0].LayerNorm.weight.data = layernorm_weight_data.clone()
+        expert_list[0].LayerNorm.bias.data = layernorm_bias_data.clone()
+        del model_layer.intermediate
+        del model_layer.output
+        self.is_moe = True
 
     def forward(
             self,
@@ -137,12 +171,13 @@ class MoEBertLayer(BertLayer):
         return outputs
 
     def feed_forward(self, attention_output, expert_input_ids, expert_attention_mask):
-        if not self.use_experts:
+        if not self.use_experts and not self.perm:
             layer_output = self.experts(attention_output)
             return layer_output, 0.0
 
-        if not self.importance_processor.is_moe:
-            raise RuntimeError("Need to turn the model to a MoE first.")
+        if not self.perm:
+            if not self.importance_processor.is_moe:
+                raise RuntimeError("Need to turn the model to a MoE first.")
 
         layer_output, gate_loss, gate_load = self.experts(
             attention_output, expert_input_ids, expert_attention_mask

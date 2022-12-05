@@ -34,16 +34,6 @@ class MoELayer(nn.Module):
             self.gate = SoftTreeGate(config)
             pass
         elif route_method in ["soft-tree-perm"]:
-            config = {
-                "k": 1,
-                "nb_experts": 4,
-                "gamma": gamma,  # gamma = [0.01, 0.1, 1]
-                "input_dim": hidden_size,
-                "temperature": 1.0,
-                "entropy_reg": entropy_reg,  # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
-                # "temperature": 1.0,
-            }
-            self.gate = SoftTreePermutedGate(config)
             config_perm = {
                 "nb_experts": 4,
                 "k": 1,
@@ -56,6 +46,17 @@ class MoELayer(nn.Module):
             }
             #self.gate_perm = NoPermutations(config_perm)
             self.gate_perm = LearnPermutations(config_perm)
+            
+            config = {
+                "k": 1,
+                "nb_experts": 4,
+                "gamma": gamma,  # gamma = [0.01, 0.1, 1]
+                "input_dim": hidden_size,
+                "temperature": 1.0,
+                "entropy_reg": entropy_reg,  # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
+                # "temperature": 1.0,
+            }
+            self.gate = SoftTreePermutedGate(config)
 
         else:
             raise KeyError("Routing method not supported.")

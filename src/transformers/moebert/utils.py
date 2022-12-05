@@ -10,20 +10,35 @@ from transformers.file_utils import ModelOutput
 from typing import Optional, Tuple
 
 
-def use_experts(layer_idx):
-    return True
+def use_experts(
+    layer_idx,
+    perm = False
+):  # This is the function that we want to choose if we don't want to use experts for a layer and instead have a normal bert layer.
+    return not perm
 
 
 def process_ffn(model):
-    if model.config.model_type == "bert":
-        inner_model = model.bert
-    else:
-        raise ValueError("Model type not recognized.")
+    if "perm" in model.config.moebert_route_method:
+        if model.config.model_type == "bert":
+            inner_model = model.bert
+        else:
+            raise ValueError("Model type not recognized.")
 
-    for i in range(model.config.num_hidden_layers):
-        model_layer = inner_model.encoder.layer[i]
-        if model_layer.use_experts:
-            model_layer.importance_processor.load_experts(model_layer)
+        for i in range(model.config.num_hidden_layers):
+            model_layer = inner_model.encoder.layer[i]
+            if model_layer.perm:
+                model_layer._init_experts(model_layer)
+
+    else:
+        if model.config.model_type == "bert":
+            inner_model = model.bert
+        else:
+            raise ValueError("Model type not recognized.")
+
+        for i in range(model.config.num_hidden_layers):
+            model_layer = inner_model.encoder.layer[i]
+            if model_layer.use_experts:
+                model_layer.importance_processor.load_experts(model_layer)
 
 
 class ImportanceProcessor:
@@ -65,7 +80,6 @@ class ImportanceProcessor:
 
     def load_experts(self, model_layer):
         expert_list = model_layer.experts.experts
-        print(expert_list)
         fc1_weight_data = model_layer.intermediate.dense.weight.data
         fc1_bias_data = model_layer.intermediate.dense.bias.data
         fc2_weight_data = model_layer.output.dense.weight.data

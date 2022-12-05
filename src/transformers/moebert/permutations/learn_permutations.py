@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import numpy as np
 import math
 
-torch.autograd.set_detect_anomaly(True)
+#torch.autograd.set_detect_anomaly(True) #don't forget to turn this off otherwise it will slow down your code so much
 
 
 class LearnPermutations(nn.Module):
@@ -85,9 +85,9 @@ class LearnPermutations(nn.Module):
         log_alpha = torch.reshape(log_alpha, (b, self.nb_experts, self.nb_experts))
 
         for _ in range(n_iter):
-            log_alpha -= torch.reshape(torch.logsumexp(log_alpha.detach().clone(), dim=2), (b, self.nb_experts, 1))
+            log_alpha -= torch.reshape(torch.logsumexp(log_alpha, dim=2), (b, self.nb_experts, 1))
             log_alpha -= torch.reshape(
-                torch.logsumexp(log_alpha.detach().clone(), dim=1, keepdim=True), (b, 1, self.nb_experts)
+                torch.logsumexp(log_alpha, dim=1, keepdim=True), (b, 1, self.nb_experts)
             )
         return torch.exp(log_alpha)
 
