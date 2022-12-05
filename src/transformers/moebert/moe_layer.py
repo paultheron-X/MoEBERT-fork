@@ -35,7 +35,7 @@ class MoELayer(nn.Module):
             pass
         elif route_method in ["soft-tree-perm"]:
             config_perm = {
-                "nb_experts": 4,
+                "nb_experts": 3072,
                 "k": 1,
                 "steps_per_epoch" : 1000,
                 "epochs_for_learning_permutation": 1.0,
@@ -56,7 +56,8 @@ class MoELayer(nn.Module):
                 "entropy_reg": entropy_reg,  # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
                 # "temperature": 1.0,
             }
-            self.gate = SoftTreePermutedGate(config)
+            #self.gate = SoftTreePermutedGate(config)
+            self.gate = SoftTreeGate(config)
 
         else:
             raise KeyError("Routing method not supported.")
@@ -161,6 +162,50 @@ class MoELayer(nn.Module):
         x = y_agg.view(bsz, seq_len, dim)
 
         return x, regularization_loss + reg, s_concat
+    
+    def _forward_soft_tree_gate_perm_bis(self, x):
+        """In this case, FFN (the expert) is a 2-layered feedforward network of the form B*ReLU(A*h), where A \in R^{3072,768},  B \in R^{768, 3072}, h \in R^768.
+
+        When you convert to MoE, this splits into 4 pieces:
+        B1*ReLU(A1*h),  B2*ReLU(A2*h)​, B3*ReLU(A3*h)​, B4*ReLU(A4*h)​
+
+        where A1, A2, A3, A4 \in R^{768,768​}, and B1, B2, B3, B4 \in R^{768,768​},
+
+        What we need to do it apply this operation s= P*A*h, where P\in R^{3072,3072​} is the output of the permutation block, 
+
+        split this s into 4 equal parts [s1,s2,s3,s4] and apply:
+
+        B1*ReLU(s1),  B2*ReLU(s2)​, B3*ReLU(s3​), B4*ReLU(s4)​
+        """
+        
+        # Do the process described above
+        
+        bsz, seq_len, dim = x.size()  # bsz = 1, seq_len = 512, dim = 768
+        
+        perm, reg = self.gate_perm.forward(x)
+        
+        x = x.view(-1, dim)
+        
+        def forward_expert_perm(input_x, expert_idx, perm):
+            input_x = self.experts[expert_idx].forward(input_x, perm)
+            return input_x
+
+        h = [forward_expert_perm(x, i) for i in range(self.num_experts)]
+
+        # pass the hidden states to the gate
+        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x, perm))
+        # print("y_agg", y_agg.shape)
+        # print("soft_averages", soft_averages.shape)
+        # print("hard_averages", hard_averages.shape)
+
+        # print(y_agg)
+        # print("soft_averages", soft_averages)
+        # print("hard_averages", hard_averages)
+
+        x = y_agg.view(bsz, seq_len, dim)
+
+        return x, regularization_loss + reg, s_concat
+        
 
     def _forward_soft_tree_gate_sentence(self, x, attention_mask):
         x_masked = x * attention_mask.unsqueeze(-1)
@@ -257,7 +302,7 @@ class MoELayer(nn.Module):
         elif self.route_method == "soft-tree":
             x, balance_loss, gate_load = self._forward_soft_tree_gate(x)
         elif self.route_method == "soft-tree-perm":
-            x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
+            x, balance_loss, gate_load = self._forward_soft_tree_gate_perm_bis(x)
         elif self.route_method == "soft-tree-sentence":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_sentence(x, attention_mask)
         elif self.route_method == "gate-sentence":

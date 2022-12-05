@@ -18,6 +18,7 @@ from .modeling_bert import (
 from ...modeling_outputs import SequenceClassifierOutput, QuestionAnsweringModelOutput
 from ...moebert.utils import (
     FeedForward,
+    FeedForwardPermutation,
     ImportanceProcessor,
     MoEModelOutput,
     MoEModelOutputWithPooling,
@@ -56,7 +57,7 @@ class MoEBertLayer(BertLayer):
 
         # construct experts this replace the Bert intermediate layer, which is a feed forward layer 
         perm = "perm" in config.moebert_route_method
-        self.perm = perm
+        self.perm = perm # If we are doing a perumation gate (meaning that we won't use the importance processor)
         self.use_experts = use_experts(layer_idx, perm)
         dropout = config.moebert_expert_dropout if self.use_experts else config.hidden_dropout_prob
         if self.use_experts:
@@ -73,7 +74,7 @@ class MoEBertLayer(BertLayer):
             )
             self.importance_processor = ImportanceProcessor(config, layer_idx, config.moebert_expert_num, 0)
         elif self.perm:
-            ffn = FeedForward(config, config.intermediate_size, dropout)
+            ffn = FeedForwardPermutation(config, config.intermediate_size, dropout) # Init with the original BertIntermediate later (same time as the experts with importance)
             self.experts = MoELayer(
                 hidden_size=config.hidden_size,
                 expert=ffn,

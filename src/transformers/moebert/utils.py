@@ -123,6 +123,49 @@ class FeedForward(nn.Module):
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
+    
+class FeedForwardPermutation(nn.Module):
+    def __init__(self, config, intermediate_size, dropout):
+        nn.Module.__init__(self)
+
+        # first layer
+        self.fc1 = nn.Linear(config.hidden_size, intermediate_size)
+        if isinstance(config.hidden_act, str):
+            self.intermediate_act_fn = ACT2FN[config.hidden_act]
+        else:
+            self.intermediate_act_fn = config.hidden_act
+
+        # second layer
+        self.fc2 = nn.Linear(intermediate_size, config.hidden_size)
+        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, hidden_states, permutations):
+        """In this case, FFN (the expert) is a 2-layered feedforward network of the form B*ReLU(A*h), where A \in R^{3072,768},  B \in R^{768, 3072}, h \in R^768.
+
+        When you convert to MoE, this splits into 4 pieces:
+        B1*ReLU(A1*h),  B2*ReLU(A2*h)​, B3*ReLU(A3*h)​, B4*ReLU(A4*h)​
+
+        where A1, A2, A3, A4 \in R^{768,768​}, and B1, B2, B3, B4 \in R^{768,768​},
+
+        What we need to do it apply this operation s= P*A*h, where P\in R^{3072,3072​} is the output of the permutation block, 
+
+        split this s into 4 equal parts [s1,s2,s3,s4] and apply:
+
+        B1*ReLU(s1),  B2*ReLU(s2)​, B3*ReLU(s3​), B4*ReLU(s4)​
+        """
+        input_tensor = hidden_states
+        Ah = self.fc1(hidden_states)
+        PAh = torch.matmul(permutations, Ah)
+        PAh = PAh.view(PAh.shape[0], 4, -1)
+        PAh = PAh.permute(1, 0, 2)
+        hidden_states = self.intermediate_act_fn(PAh)
+        hidden_states = hidden_states.permute(1, 0, 2)
+        hidden_states = hidden_states.view(hidden_states.shape[0], -1)
+        hidden_states = self.fc2(hidden_states)
+        hidden_states = self.dropout(hidden_states)
+        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+        return hidden_states
 
 
 @dataclass
