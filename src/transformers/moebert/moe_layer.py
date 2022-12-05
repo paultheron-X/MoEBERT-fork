@@ -190,7 +190,7 @@ class MoELayer(nn.Module):
             input_x = self.experts[expert_idx].forward(input_x, perm)
             return input_x
 
-        h = [forward_expert_perm(x, i) for i in range(self.num_experts)]
+        h = [forward_expert_perm(x, i, perm) for i in range(self.num_experts)]
 
         # pass the hidden states to the gate
         y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x, perm))

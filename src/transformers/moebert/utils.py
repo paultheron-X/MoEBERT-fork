@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from dataclasses import dataclass
 from torch import Tensor
@@ -155,16 +156,35 @@ class FeedForwardPermutation(nn.Module):
         B1*ReLU(s1),  B2*ReLU(s2)​, B3*ReLU(s3​), B4*ReLU(s4)​
         """
         input_tensor = hidden_states
+        print("hidden_states", hidden_states.shape)
         Ah = self.fc1(hidden_states)
-        PAh = torch.matmul(permutations, Ah)
-        PAh = PAh.view(PAh.shape[0], 4, -1)
-        PAh = PAh.permute(1, 0, 2)
-        hidden_states = self.intermediate_act_fn(PAh)
-        hidden_states = hidden_states.permute(1, 0, 2)
-        hidden_states = hidden_states.view(hidden_states.shape[0], -1)
-        hidden_states = self.fc2(hidden_states)
+        # multiply by permutation matrix to get s (beware of the batch dimension)
+        s = torch.matmul(permutations, Ah.transpose(0,1)) # (3072, 3072) * (3072, batch_size) = (1, 3072, batch_size)
+        s = s.squeeze(0) # (3072, batch_size)
+        s = s.transpose(0,1) # (3072, batch_size) 
+        # split s into 4 equal parts
+        s1, s2, s3, s4 = torch.split(s, 768, dim=1)
+        print("s1", s1.shape) # (batch_size, 768)
+        
+        # apply the 4 experts to the 4 parts of s and split fc2 into 4 equal parts
+        B1 = self.fc2[:768, :] # (768, 768)
+        B2 = self.fc2[768:2*768, :] # (768, 768)
+        B3 = self.fc2[2*768:3*768, :] # (768, 768)
+        B4 = self.fc2[3*768:, :] # (768, 768)
+        print("B1", B1.shape) # (768, 768)
+
+        # apply the 4 experts to the 4 parts of s
+        hidden_states1 = self.intermediate_act_fn(torch.matmul(s1, B1.transpose(0,1))) # (batch_size, 768) * (768, 768) = (batch_size, 768)
+        hidden_states2 = self.intermediate_act_fn(torch.matmul(s2, B2.transpose(0,1))) # (batch_size, 768) * (768, 768) = (batch_size, 768)
+        hidden_states3 = self.intermediate_act_fn(torch.matmul(s3, B3.transpose(0,1))) # (batch_size, 768) * (768, 768) = (batch_size, 768)
+        hidden_states4 = self.intermediate_act_fn(torch.matmul(s4, B4.transpose(0,1))) # (batch_size, 768) * (768, 768) = (batch_size, 768)
+        
+        # concatenate the 4 outputs
+        hidden_states = torch.cat((hidden_states1, hidden_states2, hidden_states3, hidden_states4), dim=1) # (batch_size, 3072)
+        
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
+        
         return hidden_states
 
 
