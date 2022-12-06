@@ -98,10 +98,30 @@ class MoEBertLayer(BertLayer):
         fc2_bias_data = model_layer.output.dense.bias.data
         layernorm_weight_data = model_layer.output.LayerNorm.weight.data
         layernorm_bias_data = model_layer.output.LayerNorm.bias.data
+        
+        P,_ = model_layer.experts.gate_perm.forward(torch.tensor(1)) # input is not used in the forward function
+        #P = model_layer.experts.gate_perm._get_permutation_during_training(model_layer.experts.gate_perm.permutation_log_weights)
+        P = torch.squeeze(P)
+        
         expert_list[0].fc1.weight.data = fc1_weight_data.clone()
         expert_list[0].fc1.bias.data = fc1_bias_data.clone()
-        expert_list[0].fc2.weight.data = fc2_weight_data.clone()
-        expert_list[0].fc2.bias.data = fc2_bias_data.clone()
+        ### init to do
+        P1, P2, P3, P4 = torch.split(P, 768, dim=0)
+        
+        B1 = torch.matmul(fc2_weight_data.clone(), P1.t())
+        B2 = torch.matmul(fc2_weight_data.clone(), P2.t())
+        B3 = torch.matmul(fc2_weight_data.clone(), P3.t())
+        B4 = torch.matmul(fc2_weight_data.clone(), P4.t())
+        
+        expert_list[0].fc2_1.weight.data = B1.clone()
+        expert_list[0].fc2_1.bias.data = fc2_bias_data.clone()
+        expert_list[0].fc2_2.weight.data = B2.clone()
+        expert_list[0].fc2_2.bias.data = fc2_bias_data.clone()
+        expert_list[0].fc2_3.weight.data = B3.clone()
+        expert_list[0].fc2_3.bias.data = fc2_bias_data.clone()
+        expert_list[0].fc2_4.weight.data = B4.clone()
+        expert_list[0].fc2_4.bias.data = fc2_bias_data.clone()
+
         expert_list[0].LayerNorm.weight.data = layernorm_weight_data.clone()
         expert_list[0].LayerNorm.bias.data = layernorm_bias_data.clone()
         del model_layer.intermediate

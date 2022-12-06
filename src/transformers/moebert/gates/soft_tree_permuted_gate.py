@@ -212,7 +212,10 @@ class SoftTreePermutedGate(nn.Module):
                 w_concat = torch.unsqueeze(w_concat, dim=1)  # (b, 1, k, nb_experts)
 
                 # w_concat: (b, 1, k, nb_experts), perm_mask: [k, nb_experts, nb_experts]
-
+                print("w_concat shape: ", w_concat.shape)
+                print("perm_mask shape: ", permutation_weights.shape)
+                
+                #permutation_weights = torch.unsqueeze(permutation_weights, dim=0)  # (1, k, nb_experts, nb_experts)
                 w_permuted = torch.einsum("bijk,jkl->bijl", w_concat, permutation_weights)
                 w_permuted = torch.sum(w_permuted, dim=2, keepdim=True)  # (b, 1, 1, nb_experts)
                 w_permuted = w_permuted / torch.sum(w_permuted, dim=-1, keepdim=True)  # (b, 1, 1, nb_experts)

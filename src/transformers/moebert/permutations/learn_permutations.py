@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import numpy as np
 import math
 
-#torch.autograd.set_detect_anomaly(True) #don't forget to turn this off otherwise it will slow down your code so much
+# torch.autograd.set_detect_anomaly(True) #don't forget to turn this off otherwise it will slow down your code so much
 
 
 class LearnPermutations(nn.Module):
@@ -55,6 +55,14 @@ class LearnPermutations(nn.Module):
 
         self.permutation_weights = torch.nn.Parameter(
             torch.tensor(
+                np.array([np.zeros(shape=(self.nb_experts, self.nb_experts)) for _ in range(self.no_of_permutations)]),
+                dtype=torch.float32,
+            )
+        )
+        self.permutation_weights.requires_grad = False
+
+        self.permutation_log_weights = torch.nn.Parameter(
+            torch.tensor(
                 np.array(
                     [
                         np.random.uniform(size=(self.nb_experts, self.nb_experts), low=-0.05, high=0.05)
@@ -64,16 +72,8 @@ class LearnPermutations(nn.Module):
                 dtype=torch.float32,
             )
         )
-        self.permutation_weights.requires_grad = True
-        self.permutation_weights.retain_grad()
-
-        self.permutation_log_weights = torch.nn.Parameter(
-            torch.tensor(
-                np.array([np.zeros(shape=(self.nb_experts, self.nb_experts)) for _ in range(self.no_of_permutations)]),
-                dtype=torch.float32,
-            )
-        )
-        self.permutation_log_weights.requires_grad = False
+        self.permutation_log_weights.requires_grad = True
+        self.permutation_log_weights.retain_grad()
 
     def _sample_gumbel(self, shape, eps=1e-20):
         U = torch.rand(shape)
@@ -86,9 +86,7 @@ class LearnPermutations(nn.Module):
 
         for _ in range(n_iter):
             log_alpha -= torch.reshape(torch.logsumexp(log_alpha, dim=2), (b, self.nb_experts, 1))
-            log_alpha -= torch.reshape(
-                torch.logsumexp(log_alpha, dim=1, keepdim=True), (b, 1, self.nb_experts)
-            )
+            log_alpha -= torch.reshape(torch.logsumexp(log_alpha, dim=1, keepdim=True), (b, 1, self.nb_experts))
         return torch.exp(log_alpha)
 
     def _gumbel_sinkhorn(self, log_alpha, temp=1.0, n_samples=1, noise_factor=1.0, n_iters=20, squeeze=True):
@@ -111,7 +109,7 @@ class LearnPermutations(nn.Module):
     def _generate_mask_per_permutation(self, permutation_weights):
         permutation_weights = torch.squeeze(permutation_weights)
         cost = -permutation_weights
-        row_ind, col_ind = scipy.optimize.linear_sum_assignment(cost.cpu().detach().numpy()) #to recheck
+        row_ind, col_ind = scipy.optimize.linear_sum_assignment(cost.cpu().detach().numpy())  # to recheck
         permutation_mask = torch.eye(permutation_weights.shape[-1])[torch.tensor(col_ind)]
         return permutation_mask
 
@@ -130,7 +128,9 @@ class LearnPermutations(nn.Module):
 
         regularization = torch.mean(
             torch.sum(-permutation_weights * torch.log(permutation_weights + eps), dim=(1, 2))
-        ) + torch.mean(torch.sum(-permutation_weights_row_norm * torch.log(permutation_weights_row_norm + eps), dim=(1, 2)))
+        ) + torch.mean(
+            torch.sum(-permutation_weights_row_norm * torch.log(permutation_weights_row_norm + eps), dim=(1, 2))
+        )
 
         return regularization
 
@@ -144,24 +144,26 @@ class LearnPermutations(nn.Module):
             + (np.log10(self.tau_final) - np.log10(self.tau_initial))
             * self.iterations
             / self.iterations_for_learning_permutation
-        ) #gives the same result as the one with tf version in the original code
+        )  # gives the same result as the one with tf version in the original code
 
         tau = torch.pow(10.0, log_tau)
-        
-        #stop the gradient from flowing back to the permutation weights if iterations are greater than the number of iterations for learning the permutation`
+
+        # stop the gradient from flowing back to the permutation weights if iterations are greater than the number of iterations for learning the permutation`
         permutation_log_weights = torch.where(
             self.iterations > self.iterations_for_learning_permutation,
-            permutation_log_weights.detach(), #.clone() as well ??
+            permutation_log_weights.detach(),  # .clone() as well ??
             permutation_log_weights,
         )
-        
-        #permutation_log_weights = tf.cond(
-        #    tf.math.greater_equal(self.iterations, tf.cast(self.iterations_for_learning_permutation, dtype=self.iterations.dtype)), 
+
+        # permutation_log_weights = tf.cond(
+        #    tf.math.greater_equal(self.iterations, tf.cast(self.iterations_for_learning_permutation, dtype=self.iterations.dtype)),
         #    lambda: tf.stop_gradient(permutation_log_weights),
         #    lambda: permutation_log_weights
-        #)
-        
-        n_iters = torch.tensor(20 + (150 - 20) * self.iterations / self.iterations_for_learning_permutation) # Now it's a tensor and checked 
+        # )
+
+        n_iters = torch.tensor(
+            20 + (150 - 20) * self.iterations / self.iterations_for_learning_permutation
+        )  # Now it's a tensor and checked
 
         n_iters = torch.clamp(n_iters, min=20, max=150)
         n_iters = n_iters.long()
@@ -223,7 +225,7 @@ class LearnPermutations(nn.Module):
                 permutation_weights
             )
         else:
-            explicit_perm_entropy_regularization = torch.zeros_like(())
+            explicit_perm_entropy_regularization = torch.zeros_like(torch.empty(1))
 
         if not self.learn_k_permutations:
             permutation_weights = torch.tile(permutation_weights, torch.tensor([self.k, 1, 1]))
