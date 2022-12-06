@@ -164,19 +164,6 @@ class MoELayer(nn.Module):
         return x, regularization_loss + reg, s_concat
     
     def _forward_soft_tree_gate_perm_bis(self, x):
-        """In this case, FFN (the expert) is a 2-layered feedforward network of the form B*ReLU(A*h), where A \in R^{3072,768},  B \in R^{768, 3072}, h \in R^768.
-
-        When you convert to MoE, this splits into 4 pieces:
-        B1*ReLU(A1*h),  B2*ReLU(A2*h)​, B3*ReLU(A3*h)​, B4*ReLU(A4*h)​
-
-        where A1, A2, A3, A4 \in R^{768,768​}, and B1, B2, B3, B4 \in R^{768,768​},
-
-        What we need to do it apply this operation s= P*A*h, where P\in R^{3072,3072​} is the output of the permutation block, 
-
-        split this s into 4 equal parts [s1,s2,s3,s4] and apply:
-
-        B1*ReLU(s1),  B2*ReLU(s2)​, B3*ReLU(s3​), B4*ReLU(s4)​
-        """
         
         # Do the process described above
         
@@ -190,10 +177,10 @@ class MoELayer(nn.Module):
             input_x = self.experts[expert_idx].forward(input_x, perm)
             return input_x
 
-        h = [forward_expert_perm(x, i, perm) for i in range(self.num_experts)]
+        h = list(forward_expert_perm(x, 0, perm))
 
         # pass the hidden states to the gate
-        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x, perm))
+        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x))
         # print("y_agg", y_agg.shape)
         # print("soft_averages", soft_averages.shape)
         # print("hard_averages", hard_averages.shape)

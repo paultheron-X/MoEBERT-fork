@@ -10,6 +10,7 @@ from transformers.activations import ACT2FN
 from transformers.file_utils import ModelOutput
 from typing import Optional, Tuple
 
+torch.autograd.set_detect_anomaly(True)
 
 def use_experts(
     layer_idx,
@@ -147,15 +148,15 @@ class FeedForwardPermutation(nn.Module):
     def forward(self, hidden_states, permutations):
        
         input_tensor = hidden_states
-        print("hidden_states", hidden_states.shape)
+        #print("hidden_states", hidden_states.shape)
         Ah = self.fc1(hidden_states)
         Ah = self.intermediate_act_fn(Ah)
         
         # split permutations(3072, 3072) into 4 equal parts (768, 3072)
-        print("permutations", permutations.shape)
+        #print("permutations", permutations.shape)
         permutations = permutations.squeeze(0)
         P1, P2, P3, P4 = torch.split(permutations, 768, dim=0)
-        print("P1", P1.shape) # (768, 3072)
+        #print("P1", P1.shape) # (768, 3072)
         
         # p_i * A
         s_1 = torch.matmul(P1, Ah.transpose(0,1)) # 
@@ -183,14 +184,16 @@ class FeedForwardPermutation(nn.Module):
         s3 = B3(s_3)
         s4 = B4(s_4)
         
-        # concatenate the 4 parts of s
-        s = torch.cat((s1, s2, s3, s4), dim=1)
-        print("s", s.shape) # (batch_size, 3072)
-        
         # apply the final layer
-        hidden_states = self.dropout(s)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
-        return hidden_states
+        hs_1 = self.dropout(s1)
+        hs_2 = self.dropout(s2)
+        hs_3 = self.dropout(s3)
+        hs_4 = self.dropout(s4)
+        hs_1 = self.LayerNorm(hs_1 + input_tensor)
+        hs_2 = self.LayerNorm(hs_2 + input_tensor)
+        hs_3 = self.LayerNorm(hs_3 + input_tensor)
+        hs_4 = self.LayerNorm(hs_4 + input_tensor)
+        return  (hs_1, hs_2, hs_3, hs_4)
 
 
 @dataclass
