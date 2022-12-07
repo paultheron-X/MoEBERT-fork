@@ -86,8 +86,8 @@ class LearnPermutations(nn.Module):
         log_alpha = torch.reshape(log_alpha, (b, self.nb_experts, self.nb_experts))
         #gc.collect()
         for _ in range(n_iter):
-            log_alpha = log_alpha - torch.unsqueeze(torch.logsumexp(log_alpha, dim=2), dim=2)
-            log_alpha = log_alpha - torch.unsqueeze(torch.logsumexp(log_alpha, dim=1), dim=1)
+            log_alpha = log_alpha - torch.unsqueeze(torch.logsumexp(log_alpha.detach(), dim=2), dim=2)
+            log_alpha = log_alpha - torch.unsqueeze(torch.logsumexp(log_alpha.detach(), dim=1), dim=1)
         return torch.exp(log_alpha)
 
     def _gumbel_sinkhorn(self, log_alpha, temp=1.0, n_samples=1, noise_factor=1.0, n_iters=20, squeeze=True):
@@ -177,7 +177,7 @@ class LearnPermutations(nn.Module):
             n_iters=n_iters,
             squeeze=True,
         )
-        self.permutation_weights = nn.Parameter(permutation_weights, requires_grad=False)
+        self.permutation_weights = permutation_weights #nn.Parameter(permutation_weights, requires_grad=False)
 
         return permutation_weights
 

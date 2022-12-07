@@ -10,7 +10,7 @@ from transformers.activations import ACT2FN
 from transformers.file_utils import ModelOutput
 from typing import Optional, Tuple
 
-torch.autograd.set_detect_anomaly(True)
+#torch.autograd.set_detect_anomaly(True)
 
 def use_experts(
     layer_idx,
