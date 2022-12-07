@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 import numpy as np
 import math
+import gc
 
 # torch.autograd.set_detect_anomaly(True) #don't forget to turn this off otherwise it will slow down your code so much
 
@@ -83,18 +84,10 @@ class LearnPermutations(nn.Module):
 
         b = log_alpha.shape[0]
         log_alpha = torch.reshape(log_alpha, (b, self.nb_experts, self.nb_experts))
-
+        #gc.collect()
         for _ in range(n_iter):
-            print(log_alpha.shape)
-            interm = torch.logsumexp(log_alpha, dim=2)
-            print(interm.shape)
-            log_alpha = log_alpha - torch.reshape(interm, (b, self.nb_experts, 1))
-            print(log_alpha.shape)
-            interm_bis = torch.logsumexp(log_alpha, dim=1)
-            print(interm_bis.shape)
-            log_alpha = log_alpha - torch.reshape(interm_bis, (b, 1, self.nb_experts))
-            print(log_alpha.shape)
-            print("-------------------")
+            log_alpha = log_alpha - torch.unsqueeze(torch.logsumexp(log_alpha, dim=2), dim=2)
+            log_alpha = log_alpha - torch.unsqueeze(torch.logsumexp(log_alpha, dim=1), dim=1)
         return torch.exp(log_alpha)
 
     def _gumbel_sinkhorn(self, log_alpha, temp=1.0, n_samples=1, noise_factor=1.0, n_iters=20, squeeze=True):
@@ -157,6 +150,7 @@ class LearnPermutations(nn.Module):
         tau = torch.pow(10.0, log_tau)
 
         # stop the gradient from flowing back to the permutation weights if iterations are greater than the number of iterations for learning the permutation`
+        
         permutation_log_weights = torch.where(
             self.iterations > self.iterations_for_learning_permutation,
             permutation_log_weights.detach(),  # .clone() as well ??
@@ -183,7 +177,7 @@ class LearnPermutations(nn.Module):
             n_iters=n_iters,
             squeeze=True,
         )
-        self.permutation_weights = permutation_weights
+        self.permutation_weights = nn.Parameter(permutation_weights, requires_grad=False)
 
         return permutation_weights
 
@@ -204,7 +198,7 @@ class LearnPermutations(nn.Module):
 
         permutation_weights = torch.where(
             torch.less(
-                iterations,
+                iterations.to(self.permutation_weights.device),
                 torch.tensor(self.iterations_for_learning_permutation, dtype=self.iterations.dtype).to(
                     self.permutation_weights.device
                 ),
@@ -216,13 +210,14 @@ class LearnPermutations(nn.Module):
 
     def forward(self, inputs):
         training = self.training
-
+        
+        self.iterations = self.iterations.to(inputs.device)
         if training:
             increment = torch.ones_like(self.iterations)
         else:
             increment = torch.zeros_like(self.iterations)
         self.iterations += increment
-
+        
         if training:
             permutation_weights = self._get_permutation_during_learning_and_after_learning(self.iterations)
         else:

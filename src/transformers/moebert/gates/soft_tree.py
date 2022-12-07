@@ -168,7 +168,7 @@ class SoftTreeGate(nn.Module):
         h = [torch.unsqueeze(t, -1) for t in h]
 
         # h: (bs, dim_exp_i, nb_experts)
-        h = torch.concat(h, dim=2)
+        h = torch.cat(h, dim=2)
 
         # print("h concat shape: ", h.shape)
 
