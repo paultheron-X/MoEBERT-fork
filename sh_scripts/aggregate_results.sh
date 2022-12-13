@@ -1,3 +1,5 @@
+python sh_scripts/python_helpers/get_results.py
+
 python sh_scripts/python_helpers/get_results.py --advanced 
 python sh_scripts/python_helpers/get_results.py --advanced -s
 python sh_scripts/python_helpers/get_results.py --advanced -a

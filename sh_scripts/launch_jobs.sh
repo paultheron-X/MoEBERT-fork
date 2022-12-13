@@ -10,11 +10,12 @@ then
     bash sh_scripts/hyper_param_distil_metatuner.sh cola 5 3e-5 32 0.01 7
 elif [ $1 = 'rte' ]
 then
-    bash sh_scripts/hyper_param_distil_metatuner.sh rte 1 3e-5 16 0 2
-    bash sh_scripts/hyper_param_distil_metatuner.sh rte 2 3e-5 16 0 2
-    bash sh_scripts/hyper_param_distil_metatuner.sh rte 3 3e-5 16 0 2
-    bash sh_scripts/hyper_param_distil_metatuner.sh rte 4 3e-5 16 0 2
-    bash sh_scripts/hyper_param_distil_metatuner.sh rte 5 3e-5 16 0 2
+    #bash sh_scripts/hyper_param_distil_metatuner.sh rte 1 3e-5 16 0 2
+    #bash sh_scripts/hyper_param_distil_metatuner.sh rte 2 3e-5 16 0 2
+    #bash sh_scripts/hyper_param_distil_metatuner.sh rte 3 3e-5 16 0 2
+    #bash sh_scripts/hyper_param_distil_metatuner.sh rte 4 3e-5 16 0 2
+    #bash sh_scripts/hyper_param_distil_metatuner.sh rte 5 3e-5 16 0 2
+    bash sh_scripts/hyper_param_distil_metatuner.sh rte $2 3e-5 16 0 2
 elif [ $1 = 'mrpc' ]
 then
     bash sh_scripts/hyper_param_distil_metatuner.sh mrpc $2 4e-5 8 0 2
