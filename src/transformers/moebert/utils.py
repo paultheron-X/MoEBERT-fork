@@ -99,7 +99,70 @@ class ImportanceProcessor:
         del model_layer.intermediate
         del model_layer.output
         self.is_moe = True
+        
+class ImportanceProcessorPermute(ImportanceProcessor):
+    def __init__(self, config, layer_idx, num_local_experts, local_group_rank):
+        super().__init__(config, layer_idx, num_local_experts, local_group_rank)
+        self.is_perm = False
 
+    @staticmethod
+    def load_importance_single(importance_files):
+        super().load_importance_single(importance_files)
+    
+    def _split_importance(self, arr):
+        super()._split_importance(arr)
+        
+    def load_experts(self, model_layer):
+        expert_list = model_layer.experts.experts
+        fc1_weight_data = model_layer.intermediate.dense.weight.data
+        fc1_bias_data = model_layer.intermediate.dense.bias.data
+        fc2_weight_data = model_layer.output.dense.weight.data
+        fc2_bias_data = model_layer.output.dense.bias.data
+        layernorm_weight_data = model_layer.output.LayerNorm.weight.data
+        layernorm_bias_data = model_layer.output.LayerNorm.bias.data
+        i = 0 # Single ffn
+        idx = self.importance[i]
+        first_512 = idx[:512]
+        # keep the remaining indices, such that we have in total 3072 indices
+        remaining = idx[512:3072 - 4 * 512]
+        # Duplicate the top 512 importance in 4 for all experts
+        fc1_weight_data_ = fc1_weight_data[first_512, :].clone()
+        fc1_bias_data_ = fc1_bias_data[first_512].clone()
+        fc2_weight_data_ = fc2_weight_data[:, first_512].clone()
+        fc2_bias_data_ = fc2_bias_data.clone()
+        #layernorm_weight_data_ = layernorm_weight_data.clone()
+        #layernorm_bias_data_ = layernorm_bias_data.clone()
+        
+        fc1_weight_data_begin = fc1_weight_data_.repeat(4, 1)
+        fc1_bias_data_begin = fc1_bias_data_.repeat(4)
+        fc2_weight_data_begin = fc2_weight_data_.repeat(1, 4)
+        fc2_bias_data_begin = fc2_bias_data_.repeat(4)
+        #layernorm_weight_data = layernorm_weight_data_.repeat(4)
+        #layernorm_bias_data = layernorm_bias_data_.repeat(4)
+        
+        # fill the rest of the importance with the remaining indices such that the total size is the same
+        fc1_weight_data_end = fc1_weight_data[remaining, :].clone()
+        fc1_bias_data_end = fc1_bias_data[remaining].clone()
+        fc2_weight_data_end = fc2_weight_data[:, remaining].clone()
+        fc2_bias_data_end = fc2_bias_data.clone()
+        
+        fc1_weight_data_fin = torch.cat((fc1_weight_data_begin, fc1_weight_data_end), 0)
+        fc1_bias_data_fin = torch.cat((fc1_bias_data_begin, fc1_bias_data_end), 0)
+        fc2_weight_data_fin = torch.cat((fc2_weight_data_begin, fc2_weight_data_end), 1)
+        fc2_bias_data_fin = torch.cat((fc2_bias_data_begin, fc2_bias_data_end), 0)
+        #layernorm_weight_data_fin = layernorm_weight_data_.repeat(8)
+        
+        expert_list[i].fc1.weight.data = fc1_weight_data_fin.clone()
+        expert_list[i].fc1.bias.data = fc1_bias_data_fin.clone()
+        expert_list[i].fc2.weight.data = fc2_weight_data_fin.clone()
+        expert_list[i].fc2.bias.data = fc2_bias_data_fin.clone()
+        expert_list[i].LayerNorm.weight.data = layernorm_weight_data.clone()
+        expert_list[i].LayerNorm.bias.data = layernorm_bias_data.clone()
+        del model_layer.intermediate
+        del model_layer.output
+        self.is_moe = True
+        self.is_perm = True
+        
 
 class FeedForward(nn.Module):
     def __init__(self, config, intermediate_size, dropout):
@@ -125,7 +188,77 @@ class FeedForward(nn.Module):
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
-    
+
+class FeedForwardPermutationBis(nn.Module):
+    def __init__(self, config, intermediate_size, dropout):
+        nn.Module.__init__(self)
+
+        # first layer
+        self.fc1 = nn.Linear(config.hidden_size, intermediate_size)
+        if isinstance(config.hidden_act, str):
+            self.intermediate_act_fn = ACT2FN[config.hidden_act]
+        else:
+            self.intermediate_act_fn = config.hidden_act
+
+        # second layer
+        self.fc2_1 = nn.Linear(config.hidden_size, config.hidden_size)
+        self.fc2_2 = nn.Linear(config.hidden_size, config.hidden_size)
+        self.fc2_3 = nn.Linear(config.hidden_size, config.hidden_size)
+        self.fc2_4 = nn.Linear(config.hidden_size, config.hidden_size)
+        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, hidden_states, permutations):
+       
+        input_tensor = hidden_states
+        #print("hidden_states", hidden_states.shape)
+        Ah = self.fc1(hidden_states)
+        Ah = self.intermediate_act_fn(Ah)
+        
+        # split permutations(3072, 3072) into 4 equal parts (768, 3072)
+        #print("permutations", permutations.shape)
+        permutations = permutations.squeeze(0)
+        P1, P2, P3, P4 = torch.split(permutations, 768, dim=0)
+        #print("P1", P1.shape) # (768, 3072)
+        
+        # p_i * A
+        s_1 = torch.matmul(P1, Ah.transpose(0,1)) # 
+        s_1 = s_1.squeeze(0) #
+        s_1 = s_1.transpose(0,1) # 
+        s_2 = torch.matmul(P2, Ah.transpose(0,1)) #
+        s_2 = s_2.squeeze(0) #
+        s_2 = s_2.transpose(0,1) #
+        s_3 = torch.matmul(P3, Ah.transpose(0,1)) #
+        s_3 = s_3.squeeze(0) #
+        s_3 = s_3.transpose(0,1) #
+        s_4 = torch.matmul(P4, Ah.transpose(0,1)) #
+        s_4 = s_4.squeeze(0) #
+        s_4 = s_4.transpose(0,1) #
+        
+        # apply the 4 experts to the 4 parts of s and split fc2 into 4 equal parts
+        B1 = self.fc2_1 # (768, 768)
+        B2 = self.fc2_2 # (768, 768)
+        B3 = self.fc2_3 # (768, 768)
+        B4 = self.fc2_4 # (768, 768)
+        
+        # apply the 4 experts to the 4 parts of s
+        s1 = B1(s_1)
+        s2 = B2(s_2)
+        s3 = B3(s_3)
+        s4 = B4(s_4)
+        
+        # apply the final layer
+        hs_1 = self.dropout(s1)
+        hs_2 = self.dropout(s2)
+        hs_3 = self.dropout(s3)
+        hs_4 = self.dropout(s4)
+        hs_1 = self.LayerNorm(hs_1 + input_tensor)
+        hs_2 = self.LayerNorm(hs_2 + input_tensor)
+        hs_3 = self.LayerNorm(hs_3 + input_tensor)
+        hs_4 = self.LayerNorm(hs_4 + input_tensor)
+        return  (hs_1, hs_2, hs_3, hs_4)
+
+
 class FeedForwardPermutation(nn.Module):
     def __init__(self, config, intermediate_size, dropout):
         nn.Module.__init__(self)
