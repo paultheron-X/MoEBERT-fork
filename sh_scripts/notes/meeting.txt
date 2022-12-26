@@ -1,0 +1,3 @@
+- launch experients with the seed
+- Small permutations
+- Large permutations

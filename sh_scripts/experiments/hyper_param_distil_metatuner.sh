@@ -37,11 +37,11 @@ else
     echo "Finetuned model does not exist for task $1"
     echo "Creating finetuned model for task $1"
 
-    bash sh_scripts/base_trainer.sh $1 "$1_finetuned_model" $4 $5 $3 $eval_steps
+    bash sh_scripts/experiments/base_trainer.sh $1 "$1_finetuned_model" $4 $5 $3 $eval_steps
 
     echo "Finetuned model created for task $1"
     echo "Now preprocessing importance for this task"
-    bash sh_scripts/importance_preprocess.sh $1
+    bash sh_scripts/experiments/importance_preprocess.sh $1
 
     python merge_importance.py --task $1 --num_files 3
     
@@ -63,5 +63,5 @@ do
     echo "Launching Moebert Experiment $i"
     args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $i)
 
-    bash sh_scripts/base_moebert_trainer.sh $1 $args $eval_steps $6 True
+    bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps $6 True
 done

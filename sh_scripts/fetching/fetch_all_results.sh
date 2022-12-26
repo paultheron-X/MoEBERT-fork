@@ -18,11 +18,11 @@ then
     python sh_scripts/python_helpers/get_results.py 
 elif [ $1 = 'allb' ]
 then
-    declare -a StringArray=("qqp" "qnli" "sst-2" "qqp-bis" "qqp-bis-bis" "rte" "squad" "mnli-bis" "mnli") # "squad" "qnli-bis" "cola" "rte" "mnli-bis" "mnli" 
+    declare -a StringArray=("rte" "squad" "sst-2") #"qqp" "qnli" "qqp-bis" "qqp-bis-bis" "mnli-bis") # "mnli" "sst-2" "rte" "squad" "mnli-bis" "mnli") # "squad" "qnli-bis" "cola" "rte" "mnli-bis" "mnli" 
     for ds in ${StringArray[@]};
     do
         echo "Fetching results for $ds"
-        for j in {1..100}
+        for j in {100..110}
         do
             export dir="results_gcloud/$ds/moebert_experiment_$j"
             mkdir -p $dir

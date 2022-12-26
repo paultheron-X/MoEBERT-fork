@@ -89,7 +89,7 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_):
 
 
 def generate_best_results_table(args):
-    num_experiments = 52 if not args.advanced else 100
+    num_experiments = 52 if not args.advanced else 110
     dict_res = {
         "experiment": [i for i in range(num_experiments + 1)],
     }
@@ -179,7 +179,28 @@ def generate_best_results_table(args):
 
 def generate_best_results_summary(args):
     if not args.advanced:
-        raise NotImplementedError("This function is not implemented for the basic experiments")
+        normal = pd.read_csv("results_gcloud/results_aggregated.csv")
+        res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
+        for dataset_name in datasets_names:
+            try:
+                indice_best = normal[dataset_name + "_best_metric"].idxmax()
+                best_epoch = normal[dataset_name + "_best_epoch"][indice_best]
+                best_metric = normal[dataset_name + "_best_metric"][indice_best]
+                best_experiment = normal["experiment"][indice_best]
+                res = pd.concat(
+                    [
+                        res,
+                        pd.DataFrame(
+                            [[dataset_name, best_epoch, best_metric, best_experiment]],
+                            columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
+                        ),
+                    ],
+                    ignore_index=True,
+                )
+            except KeyError:
+                pass
+        res.to_csv("results_gcloud/base_results_aggregated_summary.csv", index=False)
+
     else:
         moebert_sparsity = pd.read_csv("results_gcloud/moebert_results_aggregated_sparsity.csv")
         moebert = pd.read_csv("results_gcloud/moebert_results_aggregated.csv")
@@ -227,8 +248,8 @@ def generate_best_results_summary(args):
 def main(args):
 
     generate_best_results_table(args)
-    if args.aggregate:
-        generate_best_results_summary(args)
+    #if args.aggregate:
+    generate_best_results_summary(args)
 
 
 if __name__ == "__main__":

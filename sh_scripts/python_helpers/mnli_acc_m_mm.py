@@ -84,7 +84,7 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_):
 
 
 def generate_best_results_table(args):
-    num_experiments = 52 if not args.advanced else 100
+    num_experiments = 52 if not args.advanced else 105
     dict_res = {
         "experiment": [i for i in range(num_experiments + 1)],
     }
