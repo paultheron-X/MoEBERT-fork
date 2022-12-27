@@ -14,6 +14,7 @@ echo "distillation penalty is $8"
 echo "eval steps is $9"
 echo "1st stage best epoch is ${10}"
 echo "Mode large is ${11}"
+echo "Seed is ${12}"
 
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
@@ -53,6 +54,16 @@ else
     export num_epochs=10
 fi
 
+# check if the parameter 12 is passed or not
+if [ -z "${12}" ]
+then
+    echo "No seed passed"
+    export LOCAL_SEED=0
+else
+    echo "Seed passed is ${12}"
+    export LOCAL_SEED=${12}
+fi
+
 echo "Number of epochs is $num_epochs"
 
 if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
@@ -77,7 +88,7 @@ then
     --load_best_model_at_end False \
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
-    --seed 0 \
+    --seed $LOCAL_SEED \
     --ignore_data_skip True \
     --fp16 \
     --moebert moe \
@@ -115,7 +126,7 @@ else
     --load_best_model_at_end False \
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
-    --seed 0 \
+    --seed $LOCAL_SEED \
     --ignore_data_skip True \
     --fp16 \
     --moebert moe \
