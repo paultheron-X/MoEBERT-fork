@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Running script for task $1"
 echo "-----------"
 echo "Running script for mode $2"

@@ -1,7 +1,8 @@
+#!/bin/bash
+
 export num_gpus=3
 export CUBLAS_WORKSPACE_CONFIG=":16:8" # https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
 export PYTHONHASHSEED=0
-export output_dir="/home/paultheron/MoEBERT-fork/results"
 echo "Script name is: $0"
 echo "Task name is $1"
 echo "experiment name is $2"
@@ -16,6 +17,7 @@ echo "1st stage best epoch is ${10}"
 echo "Mode large is ${11}"
 echo "Seed is ${12}"
 
+export output_dir="/home/paultheron/MoEBERT-fork/results/$1"
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
 

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Getting best params from pretraining for task $1"
 echo "Experiment Set is $2"
 echo "Best lr was $3"

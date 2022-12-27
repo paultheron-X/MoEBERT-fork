@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Launching larger jobs for $1"
 
 if [ $1 = "qnli" ]

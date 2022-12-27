@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Launching jobs for $1"
 echo "Launching experiment $2"
 
