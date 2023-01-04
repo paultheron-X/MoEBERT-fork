@@ -30,9 +30,9 @@ HF_LOCAL_DIR="/state/partition1/user/$(whoami)/cache/huggingface"
 mkdir -p $HF_LOCAL_DIR
 rsync -a --ignore-existing $HF_USER_DIR/ ${HF_LOCAL_DIR}
 export HF_HOME=${HF_LOCAL_DIR}
-export TRANSFORMERS_OFFLINE=1
-export HF_DATASETS_OFFLINE=1
-export WANDB_DISABLED="true"
+##export TRANSFORMERS_OFFLINE=1
+##export HF_DATASETS_OFFLINE=1
+##export WANDB_DISABLED="true"
 
 export BACKEND="pytorch"
 export HF_MODEL_NAME=$1
