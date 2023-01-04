@@ -17,7 +17,7 @@ echo "1st stage best epoch is ${10}"
 echo "Mode large is ${11}"
 echo "Seed is ${12}"
 
-export output_dir="/home/paultheron/MoEBERT-fork/results/$1"
+export output_dir="/home/gridsan/ptheron/MoEBERT-fork/results/$1"
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
 

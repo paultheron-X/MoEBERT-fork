@@ -3,7 +3,7 @@
 export num_gpus=1
 export CUBLAS_WORKSPACE_CONFIG=":16:8" # https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
 export PYTHONHASHSEED=0
-export output_dir="/home/paultheron/MoEBERT-fork/results/"
+export output_dir="/home/gridsan/ptheron/MoEBERT-fork/results/"
 echo "Script name is: $0"
 echo "Task name is $1"
 echo "experiment name is $2"
