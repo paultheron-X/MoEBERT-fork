@@ -6,8 +6,8 @@
 #SBATCH --time=21-00:00
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=paulth@mit.edu
-#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_out%j.txt
-#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_err%j.txt
+#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/%j/experiments_seeds_out.txt
+#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/%j/experiments_seeds_err.txt
 
 # Initialize the module command first
 source /etc/profile
