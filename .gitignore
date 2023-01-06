@@ -9,3 +9,4 @@ mnli/log
 
 results_backup/*
 results_old/*
+logs/*

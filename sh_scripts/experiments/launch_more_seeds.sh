@@ -64,7 +64,7 @@ then
     done   
 elif [ $1 = "rte" ]
 then
-    bash sh_scripts/experiments/base_finetuning.sh rte 1 3e-5 16 0 2
+    bash sh_scripts/experiments/base_finetuning.sh rte 1 3e-5 16 0.0 2
 
     # bash sh_scripts/experiments/base_moebert_trainer.sh $1 $name $bs $weight_decay $lr $entropy $gamma $distill $eval_steps $best_epoch_first_training $seed
     export eval_steps=1000

@@ -2,7 +2,7 @@
 
 #SBATCH -N 1
 #SBATCH --job-name bert_v0
-#SBATCH --gres=gpu:volta:2
+#SBATCH --gres=gpu:volta:1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=20
 #SBATCH --time=21-00:00
@@ -22,10 +22,8 @@ module load anaconda/2021b
 source activate MoEBERT
 
 export TOTAL_GPUS=${SLURM_NTASKS}
-export GPUS_PER_NODE=2
 
 echo "Total number of GPUs: $TOTAL_GPUS"
-echo "GPUs per node: $GPUS_PER_NODE"
 
 if [ ! -e /proc/$(pidof nvidia-smi) ]
 then
@@ -48,4 +46,4 @@ export HDF5_USE_FILE_LOCKING=FALSE
 
 cd /home/gridsan/$(whoami)/MoEBERT-fork
 
-bash sh_scripts/experiments/launch_more_seeds.sh rte 
+bash sh_scripts/experiments/importance_preprocess.sh rte 

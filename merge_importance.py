@@ -21,7 +21,7 @@ def merge(args):
         "importance": importance_sorted.tolist(),
         "idx": importance_idx.tolist()
     }
-    with open(f"results/experiment_{args.task}_finetuned_model/importance_{args.task}.pkl", "wb") as file:
+    with open(f"results/{args.task}/experiment_{args.task}_finetuned_model/importance_{args.task}.pkl", "wb") as file:
         pickle.dump(result, file)
     print("Done dumping...")
 

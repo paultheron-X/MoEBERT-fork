@@ -32,7 +32,7 @@ fi
 
 
 # Check if we have a finetuned model for this task
-if [ -d "/home/gridsan/ptheron/MoEBERT-fork/results/experiment_$1_finetuned_model/model" ]
+if [ -d "/home/gridsan/ptheron/MoEBERT-fork/results/$1/experiment_$1_finetuned_model/model" ]
 then
     echo "Finetuned model already exists for task $1"
 else

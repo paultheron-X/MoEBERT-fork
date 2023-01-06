@@ -1,9 +1,7 @@
 #!/bin/bash
 
-export num_gpus=1
 export CUBLAS_WORKSPACE_CONFIG=":16:8" # https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
 export PYTHONHASHSEED=0
-export output_dir="/home/gridsan/ptheron/MoEBERT-fork/results/"
 echo "Script name is: $0"
 echo "Task name is $1"
 echo "experiment name is $2"
@@ -11,6 +9,7 @@ echo "Batch size is $3"
 echo "weight decay is $4"
 echo "learning rate is $5"
 echo "eval steps is $6"
+export output_dir="/home/gridsan/ptheron/MoEBERT-fork/results/$1"
 export saving_dir=$output_dir/"experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 
 #python -m torch.distributed.launch --nproc_per_node=$num_gpus \
@@ -27,7 +26,6 @@ then
 elif [ $1 = 'sst2' ]
 then
     export metric_for_best_model="accuracy"
-
 elif [ $1 = 'qqp' ]
 then
     export metric_for_best_model="f1"
@@ -63,7 +61,6 @@ then
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
-    --weight_decay 0.0 \
     --fp16 
 else
     python examples/text-classification/run_glue.py \
@@ -89,6 +86,5 @@ else
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed 0 \
-    --weight_decay 0.0 \
     --fp16 
 fi
