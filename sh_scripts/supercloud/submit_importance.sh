@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -N 1
-#SBATCH --job-name bert_v0
+#SBATCH --job-name bert_importance
 #SBATCH --gres=gpu:volta:1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=20

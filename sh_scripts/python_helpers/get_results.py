@@ -1,4 +1,4 @@
-# This script will read the results jsons from the directory results_gcloud for each dataset and each experiment and will create a csv file with the results
+# This script will read the results jsons from the directory results for each dataset and each experiment and will create a csv file with the results
 
 import json
 import os
@@ -32,12 +32,12 @@ def parse_args():
 
 
 datasets_names = [
+    "rte",
     "cola",
     "sst-2",
     "mrpc",
     "squad",
     "rte-true",
-    "rte",
     "mnli",
     "mnli-bis",
     "qnli",
@@ -96,7 +96,7 @@ def generate_best_results_table(args):
 
     for dataset_name in datasets_names:
         # check if the directory exists
-        if not os.path.exists("results_gcloud/" + dataset_name):
+        if not os.path.exists("results/" + dataset_name):
             continue
         else:
             dict_res_dataset = {
@@ -106,9 +106,9 @@ def generate_best_results_table(args):
             }
             for experiment in range(num_experiments + 1):
                 if args.advanced:
-                    path = f"results_gcloud/{dataset_name}/moebert_experiment_{experiment}"
+                    path = f"results/{dataset_name}/moebert_experiment_{experiment}"
                 else:
-                    path = f"results_gcloud/{dataset_name}/experiment_{experiment}"
+                    path = f"results/{dataset_name}/experiment_{experiment}"
                 try:
                     with open(path + "/all_results.json") as f:
                         all_results = json.load(f)
@@ -134,15 +134,15 @@ def generate_best_results_table(args):
             if args.advanced:
                 if args.sparsity:
                     dataset_df.to_csv(
-                        f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv",
+                        f"results/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv",
                         index=False,
                     )
                 else:
                     dataset_df.to_csv(
-                        f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv", index=False
+                        f"results/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv", index=False
                     )
             else:
-                dataset_df.to_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
+                dataset_df.to_csv(f"results/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
 
     # aggregate results
     df_fin = pd.DataFrame(dict_res)
@@ -152,34 +152,34 @@ def generate_best_results_table(args):
                 if args.sparsity:
                     df_fin = df_fin.merge(
                         pd.read_csv(
-                            f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv"
+                            f"results/{dataset_name}/moebert_results_aggregated_{dataset_name}_sparsity.csv"
                         ),
                         on="experiment",
                     )
                 else:
                     df_fin = df_fin.merge(
-                        pd.read_csv(f"results_gcloud/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv"),
+                        pd.read_csv(f"results/{dataset_name}/moebert_results_aggregated_{dataset_name}.csv"),
                         on="experiment",
                     )
             else:
                 df_fin = df_fin.merge(
-                    pd.read_csv(f"results_gcloud/{dataset_name}/results_aggregated_{dataset_name}.csv"),
+                    pd.read_csv(f"results/{dataset_name}/results_aggregated_{dataset_name}.csv"),
                     on="experiment",
                 )
         except FileNotFoundError:
             pass
     if args.advanced:
         if args.sparsity:
-            df_fin.to_csv("results_gcloud/moebert_results_aggregated_sparsity.csv", index=False)
+            df_fin.to_csv("results/moebert_results_aggregated_sparsity.csv", index=False)
         else:
-            df_fin.to_csv("results_gcloud/moebert_results_aggregated.csv", index=False)
+            df_fin.to_csv("results/moebert_results_aggregated.csv", index=False)
     else:
-        df_fin.to_csv("results_gcloud/results_aggregated.csv", index=False)
+        df_fin.to_csv("results/results_aggregated.csv", index=False)
 
 
 def generate_best_results_summary(args):
     if not args.advanced:
-        normal = pd.read_csv("results_gcloud/results_aggregated.csv")
+        normal = pd.read_csv("results/results_aggregated.csv")
         res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
         for dataset_name in datasets_names:
             try:
@@ -199,11 +199,11 @@ def generate_best_results_summary(args):
                 )
             except KeyError:
                 pass
-        res.to_csv("results_gcloud/base_results_aggregated_summary.csv", index=False)
+        res.to_csv("results/base_results_aggregated_summary.csv", index=False)
 
     else:
-        moebert_sparsity = pd.read_csv("results_gcloud/moebert_results_aggregated_sparsity.csv")
-        moebert = pd.read_csv("results_gcloud/moebert_results_aggregated.csv")
+        moebert_sparsity = pd.read_csv("results/moebert_results_aggregated_sparsity.csv")
+        moebert = pd.read_csv("results/moebert_results_aggregated.csv")
         res_sparsity = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
         res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
         for dataset_name in datasets_names:
@@ -241,8 +241,8 @@ def generate_best_results_summary(args):
                 )
             except KeyError:
                 pass
-        res_sparsity.to_csv("results_gcloud/moebert_results_aggregated_sparsity_summary.csv", index=False)
-        res.to_csv("results_gcloud/moebert_results_aggregated_summary.csv", index=False)
+        res_sparsity.to_csv("results/moebert_results_aggregated_sparsity_summary.csv", index=False)
+        res.to_csv("results/moebert_results_aggregated_summary.csv", index=False)
 
 
 def main(args):

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -N 1
-#SBATCH --job-name moebert_finetuning
+#SBATCH --job-name bert_first_finetuning
 #SBATCH --gres=gpu:volta:2
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=20
@@ -48,4 +48,7 @@ export HDF5_USE_FILE_LOCKING=FALSE
 
 cd /home/gridsan/$(whoami)/MoEBERT-fork
 
-bash sh_scripts/experiments/launch_more_seeds.sh rte 
+bash sh_scripts/experiments/hyperparameter_metatuner.sh rte 1
+bash sh_scripts/experiments/hyperparameter_metatuner.sh rte 2
+bash sh_scripts/experiments/hyperparameter_metatuner.sh rte 3
+bash sh_scripts/experiments/hyperparameter_metatuner.sh rte 7
