@@ -6,6 +6,7 @@ echo "Best lr was $3"
 echo "Best batch size was $4"
 echo "Best weight decay was $5"
 echo "Best epoch was $6"
+echo "Output dir is $7"
 
 if [ $1 = "mnli" ] 
 then
@@ -32,20 +33,20 @@ fi
 
 
 # Check if we have a finetuned model for this task
-if [ -d "/home/gridsan/ptheron/MoEBERT-fork/results/$1/experiment_$1_finetuned_model/model" ]
+if [ -d "$7/$1/experiment_$1_finetuned_model/model" ]
 then
     echo "Finetuned model already exists for task $1"
 else
     echo "Finetuned model does not exist for task $1"
     echo "Creating finetuned model for task $1"
 
-    bash sh_scripts/experiments/base_trainer.sh $1 "$1_finetuned_model" $4 $5 $3 $eval_steps
+    bash sh_scripts/experiments/base_trainer.sh $1 "$1_finetuned_model" $4 $5 $3 $eval_steps $7
 
     echo "Finetuned model created for task $1"
     echo "Now preprocessing importance for this task"
-    bash sh_scripts/experiments/importance_preprocess.sh $1
+    bash sh_scripts/experiments/importance_preprocess.sh $1 $7
 
-    python merge_importance.py --task $1 --num_files 2
+    python merge_importance.py --task $1 --num_files 2 --output_dir $7
     
     echo "Finetuned model created for task $1"
 

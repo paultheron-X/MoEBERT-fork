@@ -2,6 +2,8 @@
 
 echo "Launching larger jobs for $1"
 
+### To update by passing the output dirs
+
 if [ $1 = "qnli" ]
 then
     export eval_steps=1000

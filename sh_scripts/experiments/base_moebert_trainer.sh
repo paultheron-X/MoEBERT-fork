@@ -16,8 +16,19 @@ echo "eval steps is $9"
 echo "1st stage best epoch is ${10}"
 echo "Mode large is ${11}"
 echo "Seed is ${12}"
+echo "Given Output dir is ${13}"
 
-export output_dir="/home/gridsan/ptheron/MoEBERT-fork/results/$1"
+# check if the parameter 13 for output dir is passed or not
+if [ -z "${13}" ]
+then
+    echo "No output dir passed"
+    export LOCAL_OUTPUT="/home/gridsan/$(whoami)/MoEBERT-fork/results"
+else
+    echo "Given Output dir is ${13}"
+    export LOCAL_OUTPUT=${13}
+fi
+
+export output_dir="$LOCAL_OUTPUT/$1"
 export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
 

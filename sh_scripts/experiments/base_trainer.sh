@@ -9,7 +9,8 @@ echo "Batch size is $3"
 echo "weight decay is $4"
 echo "learning rate is $5"
 echo "eval steps is $6"
-export output_dir="/home/gridsan/ptheron/MoEBERT-fork/results/$1"
+echo "Given output dir is $7"
+export output_dir="$7/$1"
 export saving_dir=$output_dir/"experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 
 #python -m torch.distributed.launch --nproc_per_node=$num_gpus \

@@ -3,6 +3,8 @@
 echo "Launching jobs for $1"
 echo "Launching experiment $2"
 
+### To update by passing the output dirs
+
 if [ $1 = 'cola' ]
 then
     bash sh_scripts/experiments/hyper_param_distil_metatuner.sh cola 1 3e-5 32 0.01 7

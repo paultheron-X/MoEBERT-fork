@@ -5,7 +5,8 @@ export CUBLAS_WORKSPACE_CONFIG=":16:8" # https://docs.nvidia.com/cuda/cublas/ind
 export PYTHONHASHSEED=0
 echo "Script name is: $0"
 echo "Task name is $1"
-export output_dir="/home/gridsan/ptheron/MoEBERT-fork/results/$1"
+echo "Given output dir is $2"
+export output_dir="$2/$1"
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model/model"
 export saving_dir=$output_dir/"moebert_experiment_$1" # Must correspond to the line in the excel hyperparameter tuning file
 
@@ -37,7 +38,7 @@ if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
 then
     python -m torch.distributed.launch --nproc_per_node=$num_gpus \
     examples/text-classification/run_glue.py \
-    --model_name_or_path results/$1/experiment_$1_finetuned_model/model \
+    --model_name_or_path $original_model_dir \
     --task_name $1 \
     --preprocess_importance \
     --do_eval \
@@ -58,7 +59,7 @@ then
 else
     python -m torch.distributed.launch --nproc_per_node=$num_gpus \
     examples/text-classification/run_glue.py \
-    --model_name_or_path results/experiment_$1_finetuned_model/model \
+    --model_name_or_path $original_model_dir \
     --task_name $1 \
     --preprocess_importance \
     --do_eval \

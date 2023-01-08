@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -N 1
-#SBATCH --job-name moebert_finetuning
+#SBATCH --job-name moebert_finetuning_$1
 #SBATCH --gres=gpu:volta:2
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=20
@@ -11,12 +11,13 @@
 #SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_out%j.txt
 #SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_err%j.txt
 
+echo "Launching seeds finetuning for dataset $1"
+
 # Initialize the module command first
 source /etc/profile
 
 # Load modules
 module load anaconda/2021b
-#module load gurobi/gurobi-903
 
 # Call your script as you would from your command line
 source activate MoEBERT
@@ -48,4 +49,13 @@ export HDF5_USE_FILE_LOCKING=FALSE
 
 cd /home/gridsan/$(whoami)/MoEBERT-fork
 
-bash sh_scripts/experiments/launch_more_seeds.sh rte 
+if [ -z "$2" ]
+then
+    echo "No output dir passed"
+    export output_dir="/home/gridsan/$(whoami)/MoEBERT-fork/results"
+else
+    echo "Given Output dir is $2"
+    export output_dir=$2
+fi
+
+bash sh_scripts/experiments/launch_more_seeds.sh $1 $output_dir
