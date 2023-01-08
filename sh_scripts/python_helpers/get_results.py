@@ -106,9 +106,9 @@ def generate_best_results_table(args):
             }
             for experiment in range(num_experiments + 1):
                 if args.advanced:
-                    path = f"results/{dataset_name}/moebert_experiment_{experiment}"
+                    path = f"results/{dataset_name}/moebert_experiment_{experiment}/model"
                 else:
-                    path = f"results/{dataset_name}/experiment_{experiment}"
+                    path = f"results/{dataset_name}/experiment_{experiment}/model"
                 try:
                     with open(path + "/all_results.json") as f:
                         all_results = json.load(f)
