@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -N 1
-#SBATCH --job-name bert_importance
+#SBATCH --job-name bert_importance_$1
 #SBATCH --gres=gpu:volta:1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=20
@@ -45,13 +45,8 @@ export BACKEND="pytorch"
 export HDF5_USE_FILE_LOCKING=FALSE
 
 cd /home/gridsan/$(whoami)/MoEBERT-fork
-if [ -z "$2" ]
-then
-    echo "No output dir passed"
-    export output_dir="/home/gridsan/$(whoami)/MoEBERT-fork/results"
-else
-    echo "Given Output dir is $2"
-    export output_dir=$2
-fi
+
+export output_dir=OUTPUT_TOFILL
+
 
 bash sh_scripts/experiments/importance_preprocess.sh $1 $output_dir

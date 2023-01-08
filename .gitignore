@@ -10,3 +10,5 @@ mnli/log
 results_backup/*
 results_old/*
 logs/*
+
+sh_scripts/supercloud/ds_spec_submission/*
