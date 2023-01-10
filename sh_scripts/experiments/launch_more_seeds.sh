@@ -65,7 +65,7 @@ then
     done   
 elif [ $1 = "rte" ]
 then
-    bash sh_scripts/experiments/base_finetuning.sh rte 1 3e-5 16 0.0 2 $2
+    bash sh_scripts/experiments/base_finetuning.sh rte 1 2e-5 8 0.01 6 $2
 
     # bash sh_scripts/experiments/base_moebert_trainer.sh $1 $name $bs $weight_decay $lr $entropy $gamma $distill $eval_steps $best_epoch_first_training $seed
     export eval_steps=1000
@@ -98,7 +98,7 @@ then
     done    
 elif [ $1 = "mrpc" ]
 then
-    bash sh_scripts/experiments/base_finetuning.sh mrpc 1 4e-5 8 0 2 $2
+    bash sh_scripts/experiments/base_finetuning.sh mrpc 1 4e-5 8 0.1 6 $2
 
     export eval_steps=1000
     declare -a StringArray=("7" "11" "35" "56" "102")
