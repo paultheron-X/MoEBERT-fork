@@ -36,6 +36,15 @@ fi
 if [ -d "$7/$1/experiment_$1_finetuned_model/model" ]
 then
     echo "Finetuned model already exists for task $1"
+    if [ -f "$7/$1/experiment_$1_finetuned_model/importance_$1.pkl" ]
+    then
+        echo "Importance already exists for task $1"
+    else
+        echo "Importance does not exist for task $1"
+        echo "Now preprocessing importance for this task"
+        bash sh_scripts/experiments/importance_preprocess.sh $1 $7
+        python merge_importance.py --task $1 --num_files 1 
+    fi
 else
     echo "Finetuned model does not exist for task $1"
     echo "Creating finetuned model for task $1"
@@ -46,7 +55,7 @@ else
     echo "Now preprocessing importance for this task"
     bash sh_scripts/experiments/importance_preprocess.sh $1 $7
 
-    python merge_importance.py --task $1 --num_files 2 --output_dir $7
+    python merge_importance.py --task $1 --num_files 1 
     
     echo "Finetuned model created for task $1"
 

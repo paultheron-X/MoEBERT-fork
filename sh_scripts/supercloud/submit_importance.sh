@@ -4,12 +4,12 @@
 #SBATCH --job-name bert_importance_$1
 #SBATCH --gres=gpu:volta:1
 #SBATCH --tasks-per-node=1
-#SBATCH --cpus-per-task=20
+#SBATCH --cpus-per-task=4
 #SBATCH --time=21-00:00
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=paulth@mit.edu
-#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_out%j.txt
-#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_err%j.txt
+#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_importance_$1_out%j.txt
+#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_importance_$1_err%j.txt
 
 # Initialize the module command first
 source /etc/profile

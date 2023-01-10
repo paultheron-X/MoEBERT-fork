@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .gates import SoftTreeGate, SoftTreePermutedGate
-from .permutations import NoPermutations, LearnPermutations
+from .permutations import NoPermutations, LearnPermutations, LearnPermutationsBase
 
 
 class MoELayer(nn.Module):
@@ -38,8 +38,16 @@ class MoELayer(nn.Module):
             # We call the Learn Permutations gate, and we use the soft tree gate the same as in the Conditional Computing Repo. 
             # BEWARE: Do not put 'perm' in the name of the route_method, as it will be confused with the permutation gate. 
             #           This will break everything while initializing the MoEBERT layers
-            self.gate = SoftTreePermutedGate(config)
-            self.gate_perm = LearnPermutations(config_perm)
+            config_perm = {
+                "nb_experts": 4,
+                "k": 1,
+                "steps_per_epoch" : 1000,
+                "epochs_for_learning_permutation": 1.0,
+                "learn_k_permutations" : 1,
+                "noise_factor" : 0.05,
+                "perm_entropy_reg" : 1e-4
+
+            }
             config = {
                 "k": 1,
                 "nb_experts": 4,
@@ -49,6 +57,9 @@ class MoELayer(nn.Module):
                 "entropy_reg": entropy_reg,  # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
                 # "temperature": 1.0,
             }
+            
+            self.gate = SoftTreePermutedGate(config)
+            self.gate_perm = LearnPermutationsBase(config_perm)
             pass
         elif route_method in ["soft-tree-perm"]:
             config_perm = {
@@ -59,11 +70,10 @@ class MoELayer(nn.Module):
                 "learn_k_permutations" : 1,
                 "noise_factor" : 0.05,
                 "perm_entropy_reg" : 1e-1
-
             }
+            
             #self.gate_perm = NoPermutations(config_perm)
             self.gate_perm = LearnPermutations(config_perm)
-            
             config = {
                 "k": 1,
                 "nb_experts": 4,

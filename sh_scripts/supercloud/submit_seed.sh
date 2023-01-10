@@ -4,12 +4,12 @@
 #SBATCH --job-name moebert_finetuning_$1
 #SBATCH --gres=gpu:volta:2
 #SBATCH --tasks-per-node=1
-#SBATCH --cpus-per-task=20
+#SBATCH --cpus-per-task=4
 #SBATCH --time=21-00:00
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=paulth@mit.edu
-#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_out%j.txt
-#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_err%j.txt
+#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_$1_out%j.txt
+#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_$1_err%j.txt
 
 echo "Launching seeds finetuning for dataset $1"
 
