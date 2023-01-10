@@ -12,20 +12,21 @@ echo "learning rate is $5"
 echo "entropy is $6"
 echo "gamma is $7"
 echo "distillation penalty is $8"
-echo "eval steps is $9"
-echo "1st stage best epoch is ${10}"
-echo "Mode large is ${11}"
-echo "Seed is ${12}"
-echo "Given Output dir is ${13}"
+echo "Learn permutation epoch is $9"
+echo "eval steps is ${10}"
+echo "1st stage best epoch is ${11}"
+echo "Mode large is ${12}"
+echo "Seed is ${13}"
+echo "Given Output dir is ${14}"
 
 # check if the parameter 13 for output dir is passed or not
-if [ -z "${13}" ]
+if [ -z "${14}" ]
 then
     echo "No output dir passed"
     export LOCAL_OUTPUT="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 else
-    echo "Given Output dir is ${13}"
-    export LOCAL_OUTPUT=${13}
+    echo "Given Output dir is ${14}"
+    export LOCAL_OUTPUT=${14}
 fi
 
 export output_dir="$LOCAL_OUTPUT/$1"
@@ -55,7 +56,7 @@ then
     export metric_for_best_model="accuracy"
 fi
 
-if [ ${11} = 'True' ]
+if [ ${12} = 'True' ]
 then
     if [ $1 = 'sst2' ]
     then
@@ -68,13 +69,13 @@ else
 fi
 
 # check if the parameter 12 is passed or not
-if [ -z "${12}" ]
+if [ -z "${13}" ]
 then
     echo "No seed passed"
     export LOCAL_SEED=0
 else
-    echo "Seed passed is ${12}"
-    export LOCAL_SEED=${12}
+    echo "Seed passed is ${13}"
+    export LOCAL_SEED=${13}
 fi
 
 echo "Number of epochs is $num_epochs"
@@ -114,7 +115,8 @@ then
     --moebert_route_method soft-tree-oldpgate \
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
-    --moebert_gate_gamma $7
+    --moebert_gate_gamma $7 \
+    --moebert_perm_epoch $9 \
 else
     python -m torch.distributed.launch --nproc_per_node=$num_gpus
     examples/text-classification/run_glue.py \
@@ -134,7 +136,7 @@ else
     --logging_dir $saving_dir/log \
     --report_to tensorboard \
     --evaluation_strategy steps \
-    --eval_steps $9 \
+    --eval_steps ${10} \
     --save_strategy epoch \
     --load_best_model_at_end False \
     --metric_for_best_model $metric_for_best_model \
@@ -152,5 +154,6 @@ else
     --moebert_route_method soft-tree-oldpgate \
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
-    --moebert_gate_gamma $7
+    --moebert_gate_gamma $7 \
+    --moebert_perm_epoch $9 \
 fi
