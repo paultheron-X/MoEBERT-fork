@@ -229,6 +229,10 @@ class ModelArguments:
         default=1,
         metadata={"help": "value of entropy to use in the entropy regularizer for gating."}
     )
+    moebert_perm_epoch: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of entropy to use in the entropy regularizer for gating."}
+    )
     apply_lora: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to apply LoRA or not."},
@@ -436,6 +440,7 @@ def main():
     config.moebert_share_importance = model_args.moebert_share_importance
     config.moebert_gate_gamma = model_args.moebert_gate_gamma
     config.moebert_gate_entropy = model_args.moebert_gate_entropy
+    config.moebert_perm_epoch = model_args.moebert_perm_epoch
     
 
     tokenizer = AutoTokenizer.from_pretrained(

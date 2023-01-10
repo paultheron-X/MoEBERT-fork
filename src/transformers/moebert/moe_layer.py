@@ -10,7 +10,7 @@ from .permutations import NoPermutations, LearnPermutations, LearnPermutationsBa
 
 
 class MoELayer(nn.Module):
-    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list, gamma, entropy_reg):
+    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list, gamma, entropy_reg, perm_epoch):
         nn.Module.__init__(self)
         self.num_experts = num_experts
         self.experts = nn.ModuleList([copy.deepcopy(expert) for i in range(num_experts)])
@@ -42,9 +42,9 @@ class MoELayer(nn.Module):
                 "nb_experts": 4,
                 "k": 1,
                 "steps_per_epoch" : 1000,
-                "epochs_for_learning_permutation": 1.0,
+                "epochs_for_learning_permutation": perm_epoch,
                 "learn_k_permutations" : 1,
-                "noise_factor" : 0.05,
+                "noise_factor" : 0.0,
                 "perm_entropy_reg" : 1e-4
 
             }
@@ -188,7 +188,7 @@ class MoELayer(nn.Module):
 
         x = y_agg.view(bsz, seq_len, dim)
 
-        return x, regularization_loss + reg, s_concat
+        return x, regularization_loss + reg.to(regularization_loss.device), s_concat
     
     def _forward_soft_tree_gate_perm_bis(self, x):
         

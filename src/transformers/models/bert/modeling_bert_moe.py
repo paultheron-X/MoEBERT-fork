@@ -71,6 +71,7 @@ class MoEBertLayer(BertLayer):
                 hash_list=config.moebert_route_hash_list,
                 gamma=config.moebert_gate_gamma,
                 entropy_reg=config.moebert_gate_entropy,
+                perm_epoch=config.moebert_perm_epoch,
             )
             self.importance_processor = ImportanceProcessor(config, layer_idx, config.moebert_expert_num, 0)
         elif self.perm:
