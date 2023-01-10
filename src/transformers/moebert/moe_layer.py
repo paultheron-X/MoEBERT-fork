@@ -33,6 +33,23 @@ class MoELayer(nn.Module):
             }
             self.gate = SoftTreeGate(config)
             pass
+        elif route_method in ["soft-tree-oldpgate"]: 
+            # This is the mode were we learn the permutation accross the 4 experts, with the weights initialized with importance processor 
+            # We call the Learn Permutations gate, and we use the soft tree gate the same as in the Conditional Computing Repo. 
+            # BEWARE: Do not put 'perm' in the name of the route_method, as it will be confused with the permutation gate. 
+            #           This will break everything while initializing the MoEBERT layers
+            self.gate = SoftTreePermutedGate(config)
+            self.gate_perm = LearnPermutations(config_perm)
+            config = {
+                "k": 1,
+                "nb_experts": 4,
+                "gamma": gamma,  # gamma = [0.01, 0.1, 1]
+                "input_dim": hidden_size,
+                "temperature": 1.0,
+                "entropy_reg": entropy_reg,  # [5e-2, 1e-1, 5e-1, 1, 5, 10] 1.0
+                # "temperature": 1.0,
+            }
+            pass
         elif route_method in ["soft-tree-perm"]:
             config_perm = {
                 "nb_experts": 3072,
@@ -290,6 +307,8 @@ class MoELayer(nn.Module):
             x, balance_loss, gate_load = self._forward_soft_tree_gate(x)
         elif self.route_method == "soft-tree-perm":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm_bis(x)
+        elif self.route_method == "soft-tree-oldpgate":
+            x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
         elif self.route_method == "soft-tree-sentence":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_sentence(x, attention_mask)
         elif self.route_method == "gate-sentence":
