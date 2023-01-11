@@ -34,7 +34,7 @@ def parse_args():
 datasets_names = [
     "rte",
     "cola",
-    "sst-2",
+    "sst2",
     "mrpc",
     "squad",
     "rte-true",
@@ -49,7 +49,7 @@ datasets_names = [
 
 metric_dict = {
     "cola": "matthews_correlation",
-    "sst-2": "accuracy",
+    "sst2": "accuracy",
     "mrpc": "f1",
     "qqp": "f1",
     "mnli": "accuracy",

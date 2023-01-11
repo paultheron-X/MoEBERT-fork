@@ -35,7 +35,7 @@ then
     done   
 elif [ $1 = "sst2" ]
 then
-    bash sh_scripts/experiments/base_finetuning.sh sst2 1 3e-5 32 0.01 3 $2
+    bash sh_scripts/experiments/base_finetuning.sh sst2 1 2e-5 16 0 3 $2
     export eval_steps=1000
     declare -a StringArray=("14" "37" "92" "50" "63")
     for ((i=0; i<${#StringArray[@]}; i++)); do

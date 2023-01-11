@@ -30,7 +30,7 @@ else
 fi
 
 export output_dir="$LOCAL_OUTPUT/$1"
-export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
+export saving_dir=$output_dir/"moebert_perm_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
 
 if [ $1 = 'cola' ]
