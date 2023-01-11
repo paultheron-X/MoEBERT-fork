@@ -1,15 +1,15 @@
 #!/bin/bash
 
 #SBATCH -N 1
-#SBATCH --job-name moebert_finetuning_$1
+#SBATCH --job-name moebert_perm_finetuning_$1
 #SBATCH --gres=gpu:volta:2
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --time=21-00:00
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=paulth@mit.edu
-#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_perm_$1_out%j.txt
-#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_seeds_perm_$1_err%j.txt
+#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_perm_$1_out%j.txt
+#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/experiments_perm_$1_err%j.txt
 
 echo "Launching seeds finetuning for dataset $1"
 
@@ -52,4 +52,4 @@ cd /home/gridsan/$(whoami)/MoEBERT-fork
 export output_dir=OUTPUT_TOFILL
 
 
-bash sh_scripts/experiments/launch_more_seeds_second.sh $1 $output_dir
+bash sh_scripts/experiments/launch_jobs_perm.sh $1 $output_dir
