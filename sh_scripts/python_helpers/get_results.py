@@ -90,8 +90,12 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_):
 
 def generate_best_results_table(args):
     num_experiments = 52 if not args.advanced else 110
+    if not args.advanced:
+        range_of_exp = range(num_experiments + 1)
+    else:
+        range_of_exp = list(range(num_experiments + 1)) + [1011, 1012, 1013, 1014, 1015, 1021, 1022, 1023, 1024, 1025, 1031, 1032, 1033, 1034, 1035, 1041, 1042, 1043, 1044, 1045, 1051, 1052, 1053, 1054, 1055]
     dict_res = {
-        "experiment": [i for i in range(num_experiments + 1)],
+        "experiment": [i for i in range_of_exp],
     }
 
     for dataset_name in datasets_names:
@@ -100,11 +104,11 @@ def generate_best_results_table(args):
             continue
         else:
             dict_res_dataset = {
-                "experiment": [i for i in range(num_experiments + 1)],
+                "experiment": [i for i in range_of_exp],
                 dataset_name + "_best_epoch": [],
                 dataset_name + "_best_metric": [],
             }
-            for experiment in range(num_experiments + 1):
+            for experiment in range_of_exp:
                 if args.advanced:
                     path = f"results/{dataset_name}/moebert_experiment_{experiment}/model"
                 else:

@@ -1,11 +1,17 @@
 Jobs ID running
 
-21030781 moebert_seeds ds=qnli
+21030781 moebert_seeds ds=qnli SR
 
-21024929 bert_ffinetuning ds=qqp
+21024929 bert_ffinetuning ds=qqp SR
 
-21045637 moebert_seeds ds=sst2
+21045637 moebert_seeds ds=sst2 SR
 
-21045851 moebert_perm ds=rte
+21045851 moebert_perm ds=rte ERR PATH
 
-21045852 moebert_seeds ds=rte
+21045852 moebert_seeds ds=rte  FINISHED
+
+21046669 moebert_seeds ds=mrpc SR FINISHED
+
+21056122 moebert_perm ds=rte ERR
+
+21056838 moebert_perm ds=rte

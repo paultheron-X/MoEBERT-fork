@@ -116,7 +116,7 @@ then
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
     --moebert_gate_gamma $7 \
-    --moebert_perm_epoch $9 \
+    --moebert_perm_epoch $9
 else
     python -m torch.distributed.launch --nproc_per_node=$num_gpus
     examples/text-classification/run_glue.py \
@@ -155,5 +155,5 @@ else
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
     --moebert_gate_gamma $7 \
-    --moebert_perm_epoch $9 \
+    --moebert_perm_epoch $9
 fi

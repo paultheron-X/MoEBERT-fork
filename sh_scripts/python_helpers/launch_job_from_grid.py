@@ -35,7 +35,7 @@ args = _parse_args()
 
 if args.perm:
     hyper_params_all = pd.read_csv(
-    "moebert_perm_distil_grid.csv",
+    "sh_scripts/python_helpers/moebert_perm_distil_grid.csv",
     sep=";",
     index_col=0,
     dtype={

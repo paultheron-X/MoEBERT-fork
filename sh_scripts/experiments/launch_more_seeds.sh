@@ -20,7 +20,7 @@ then
     done   
 elif [ $1 = "qqp" ]
 then
-    bash sh_scripts/experiments/base_finetuning.sh qqp 1 2e-5 8 0.01 2 $2
+    bash sh_scripts/experiments/base_finetuning.sh qqp 1 2e-5 16 0.1 2 $2
     export eval_steps=2000
     declare -a StringArray=("10" "23" "35" "49" "88")
     for ((i=0; i<${#StringArray[@]}; i++)); do
