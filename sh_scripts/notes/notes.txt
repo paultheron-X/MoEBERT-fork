@@ -1,4 +1,6 @@
-Jobs ID running
+Jobs ID running 
+
+SR = Still Running // Q = Queued // F = Finished
 
 21030781 moebert_seeds ds=qnli SR
 
@@ -6,12 +8,14 @@ Jobs ID running
 
 21045637 moebert_seeds ds=sst2 SR
 
-21045851 moebert_perm ds=rte ERR PATH
+21057100 moebert_perm ds=rte SR
 
-21045852 moebert_seeds ds=rte  FINISHED
+21057106 moebert_perm ds=mrpc Q
 
-21046669 moebert_seeds ds=mrpc SR FINISHED
+21057107 moebert_perm ds=sst2 Q
 
-21056122 moebert_perm ds=rte ERR
+21057108 moebert_perm ds=qnli Q
 
-21056838 moebert_perm ds=rte
+21057110 moebert_seed ds=qqp Q
+
+21057111 moebert_perm ds=qqp Q
