@@ -233,6 +233,10 @@ class ModelArguments:
         default=1,
         metadata={"help": "value of entropy to use in the entropy regularizer for gating."}
     )
+    moebert_k: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of k for the number of experts"}
+    )
     apply_lora: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to apply LoRA or not."},
@@ -441,6 +445,7 @@ def main():
     config.moebert_gate_gamma = model_args.moebert_gate_gamma
     config.moebert_gate_entropy = model_args.moebert_gate_entropy
     config.moebert_perm_epoch = model_args.moebert_perm_epoch
+    config.moebert_k = model_args.moebert_k
     
 
     tokenizer = AutoTokenizer.from_pretrained(

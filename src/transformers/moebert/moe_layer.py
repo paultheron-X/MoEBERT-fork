@@ -10,7 +10,7 @@ from .permutations import NoPermutations, LearnPermutations, LearnPermutationsBa
 
 
 class MoELayer(nn.Module):
-    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list, gamma, entropy_reg, perm_epoch):
+    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list, gamma, entropy_reg, perm_epoch, k=1):
         nn.Module.__init__(self)
         self.num_experts = num_experts
         self.experts = nn.ModuleList([copy.deepcopy(expert) for i in range(num_experts)])
@@ -23,7 +23,7 @@ class MoELayer(nn.Module):
             self.hash_list = self._balance_hash_list(hash_list)
         elif route_method in ["soft-tree"]:
             config = {
-                "k": 1,
+                "k": k,
                 "nb_experts": 4,
                 "gamma": gamma,  # gamma = [0.01, 0.1, 1]
                 "input_dim": hidden_size,

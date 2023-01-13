@@ -49,7 +49,7 @@ class SoftTreeGate(nn.Module):
 
         self.nb_experts = config["nb_experts"]
         self.max_depth = (int)(np.ceil(np.log2(self.nb_experts)))
-        self.k = config["k"]
+        self.k = int(config["k"])
 
         #         #print("=========self.nb_experts:", self.nb_experts)
         #         #print("=========self.max_depth:", self.max_depth)

@@ -10,12 +10,14 @@ SR = Still Running // Q = Queued // F = Finished
 
 21057100 moebert_perm ds=rte SR
 
-21057106 moebert_perm ds=mrpc Q
+21057106 moebert_perm ds=mrpc SR
 
-21057107 moebert_perm ds=sst2 Q
+21057107 moebert_perm ds=sst2 SR
 
-21057108 moebert_perm ds=qnli Q
+21057108 moebert_perm ds=qnli Q (Ressources)
 
-21057110 moebert_seed ds=qqp Q
+21057110 moebert_seed ds=qqp Q (Ressources)
 
-21057111 moebert_perm ds=qqp Q
+21057111 moebert_perm ds=qqp Q (Ressources)
+
+21058514 moebert_seeds_k2 ds=rte SR
