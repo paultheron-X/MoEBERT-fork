@@ -17,7 +17,7 @@ then
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mnli 1 3e-5 16 0.01 2 $2
 elif [ $1 = "rte" ]
 then
-    bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 1 2e-5 8 0.01 6 $2
+    #bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 1 2e-5 8 0.01 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 2 2e-5 8 0.01 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 3 2e-5 8 0.01 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 4 2e-5 8 0.01 6 $2
@@ -31,7 +31,7 @@ then
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh cola 5 3e-5 32 0.01 7 $2
 elif [ $1 = "mrpc" ]
 then
-    bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 1 4e-5 8 0.1 6 $2
+    #bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 1 4e-5 8 0.1 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 2 4e-5 8 0.1 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 3 4e-5 8 0.1 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 4 4e-5 8 0.1 6 $2

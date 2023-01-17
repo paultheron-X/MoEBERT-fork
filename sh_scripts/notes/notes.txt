@@ -2,22 +2,42 @@ Jobs ID running
 
 SR = Still Running // Q = Queued // F = Finished
 
-21030781 moebert_seeds ds=qnli SR
+21030781 moebert_seeds ds=qnli SR  ERR Stopped at memory error Dealt
 
-21024929 bert_ffinetuning ds=qqp SR
+21024929 bert_ffinetuning ds=qqp SR Finished
 
-21045637 moebert_seeds ds=sst2 SR
+21045637 moebert_seeds ds=sst2 SR ERR Stopped at memory error Dealt
 
-21057100 moebert_perm ds=rte SR
+21057100 moebert_perm ds=rte SR ERR Stopped at memory error Dealt
 
-21057106 moebert_perm ds=mrpc SR
+21057106 moebert_perm ds=mrpc SR ERR Stopped at memory error Dealt
 
-21057107 moebert_perm ds=sst2 SR
+21057107 moebert_perm ds=sst2 SR ERR Stopped at memory error Dealt
 
-21057108 moebert_perm ds=qnli Q (Ressources)
+21057108 moebert_perm ds=qnli Q (Ressources) ERR Stopped at memory error
 
-21057110 moebert_seed ds=qqp Q (Ressources)
+21057110 moebert_seed ds=qqp Q (Ressources) ERR Stopped at memory error
 
-21057111 moebert_perm ds=qqp Q (Ressources)
+21057111 moebert_perm ds=qqp Q (Ressources) ERR Stopped at memory error
 
-21058514 moebert_seeds_k2 ds=rte SR
+21058514 moebert_seeds_k2 ds=rte SR ERR Stopped at memory error Dealt
+
+
+--------------- New batch ---------------
+
+21119015 moebert_seeds_k2 ds=rte SR CPU
+
+21119035 moebert_seeds ds=qnli SR
+
+21119041 moebert_seeds ds=sst2 Q
+
+21119116 moebert_perm ds=rte SR CPU
+
+21119114 moebert_perm ds=mrpc SR CPU
+
+21119092 moebert_perm ds=sst2 Q
+
+21119095 moebert_perm ds=qnli Q
+
+21119097 moebert_seed ds=qqp Q
+
