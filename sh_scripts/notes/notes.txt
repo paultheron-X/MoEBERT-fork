@@ -27,17 +27,35 @@ SR = Still Running // Q = Queued // F = Finished
 
 21119015 moebert_seeds_k2 ds=rte SR CPU
 
-21119035 moebert_seeds ds=qnli SR
+21119035 moebert_seeds ds=qnli SR END
 
-21119041 moebert_seeds ds=sst2 Q
+21119041 moebert_seeds ds=sst2 SR END CHECKPOINT AFTER 1 EPOCH
 
-21119116 moebert_perm ds=rte SR CPU
+21120889 moebert_perm ds=rte SR END
 
-21119114 moebert_perm ds=mrpc SR CPU
+21120890 moebert_perm ds=mrpc SR END
 
-21119092 moebert_perm ds=sst2 Q
+21119092 moebert_perm ds=sst2 SR END
 
-21119095 moebert_perm ds=qnli Q
+21119095 moebert_perm ds=qnli SR
 
-21119097 moebert_seed ds=qqp Q
+21119097 moebert_seed ds=qqp SR
+
+--------------- New batch ---------------
+
+21126920 moebert_seeds_k2 ds=rte SR CPU
+
+21126921 moebert_seeds ds=qnli SR 
+
+21126922 moebert_seeds ds=sst2 SR 
+
+21126923 moebert_seed ds=qqp SR
+
+21127590 moebert_perm ds=rte SR 
+
+21127591 moebert_perm ds=mrpc SR 
+
+21127592 moebert_perm ds=sst2 SR 
+
+21127593 moebert_perm ds=qnli SR
 
