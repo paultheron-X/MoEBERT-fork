@@ -5,20 +5,20 @@ echo "Output dir is $2"
 
 if [ $1 = "qnli" ]
 then
-    bash sh_scripts/experiments/hyper_param_perm_metatuner.sh qnli 1 2e-5 32 0 7 $2
+    bash sh_scripts/experiments/hyper_param_perm_metatuner.sh qnli 2 2e-5 32 0 7 $2
 elif [ $1 = "qqp" ]
 then
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh qqp 1 2e-5 16 0.1 2 $2
 elif [ $1 = "sst2" ]
 then
-    bash sh_scripts/experiments/hyper_param_perm_metatuner.sh sst2 1 2e-5 16 0 3 $2
+    bash sh_scripts/experiments/hyper_param_perm_metatuner.sh sst2 2 2e-5 16 0 3 $2
 elif [ $1 = "mnli" ]
 then
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mnli 1 3e-5 16 0.01 2 $2
 elif [ $1 = "rte" ]
 then
     #bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 1 2e-5 8 0.01 6 $2
-    bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 2 2e-5 8 0.01 6 $2
+    #bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 2 2e-5 8 0.01 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 3 2e-5 8 0.01 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 4 2e-5 8 0.01 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh rte 5 2e-5 8 0.01 6 $2

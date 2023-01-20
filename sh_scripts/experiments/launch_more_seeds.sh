@@ -8,7 +8,7 @@ then
     bash sh_scripts/experiments/base_finetuning.sh qnli 1 2e-5 32 0 7 $2
     export eval_steps=1000
     declare -a StringArray=("19" "32" "28" "65" "88")
-    for ((i=2; i<${#StringArray[@]}; i++)); do  # 0 and 1 are already done
+    for ((i=3; i<${#StringArray[@]}; i++)); do  # 0 and 1 are already done
     # Access the current element of the array using the index variable
         element=${StringArray[$i]}
         j=$((i+1))
@@ -16,6 +16,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done   
 elif [ $1 = "qqp" ]
@@ -31,6 +34,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done   
 elif [ $1 = "sst2" ]
@@ -38,7 +44,7 @@ then
     bash sh_scripts/experiments/base_finetuning.sh sst2 1 2e-5 16 0 3 $2
     export eval_steps=1000
     declare -a StringArray=("14" "37" "92" "50" "63")
-    for ((i=1; i<${#StringArray[@]}; i++)); do # 0 is already done (jobs failed)
+    for ((i=2; i<${#StringArray[@]}; i++)); do # 0 is already done (jobs failed)
     # Access the current element of the array using the index variable
         element=${StringArray[$i]}
         j=$((i+1))
@@ -46,6 +52,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done   
 elif [ $1 = "mnli" ]
@@ -78,6 +87,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done    
 elif [ $1 = "cola" ]
@@ -94,6 +106,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done    
 elif [ $1 = "mrpc" ]
@@ -110,6 +125,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done    
 fi

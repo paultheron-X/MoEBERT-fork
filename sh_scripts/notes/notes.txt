@@ -23,7 +23,7 @@ SR = Still Running // Q = Queued // F = Finished
 21058514 moebert_seeds_k2 ds=rte SR ERR Stopped at memory error Dealt
 
 
---------------- New batch ---------------
+--------------- Old batch ---------------
 
 21119015 moebert_seeds_k2 ds=rte SR CPU
 
@@ -41,7 +41,7 @@ SR = Still Running // Q = Queued // F = Finished
 
 21119097 moebert_seed ds=qqp SR
 
---------------- New batch ---------------
+--------------- Old batch ---------------
 
 21126920 moebert_seeds_k2 ds=rte SR CPU
 
@@ -59,3 +59,23 @@ SR = Still Running // Q = Queued // F = Finished
 
 21127593 moebert_perm ds=qnli SR
 
+
+XXXXXX All dead because of Supercloud maintenance XXXXXX
+
+--------------- New batch ---------------
+
+21141324 moebert_seeds_k2 ds=rte SR CPU
+
+21141334 moebert_seeds ds=qnli SR 
+
+21141336 moebert_seeds ds=sst2 SR 
+
+21141342 moebert_seeds ds=qqp SR
+
+21141348 moebert_perm ds=rte SR 
+
+21141350 moebert_perm ds=mrpc SR 
+
+21141353 moebert_perm ds=sst2 SR 
+
+21141354 moebert_perm ds=qnli SR

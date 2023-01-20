@@ -37,7 +37,7 @@ from .file_utils import (
     is_torch_tpu_available,
 )
 
-from .moebert.gates import SoftTreeGate
+from .moebert.gates import SoftTreeGate, SoftTreePermutedGate
 
 if is_torch_available():
     import torch
@@ -451,10 +451,14 @@ def reset_sparsity(model):
     for name, module in model.named_modules():
         if isinstance(module, SoftTreeGate):
             module.sparsity_metrics.reset()
+        elif isinstance(module, SoftTreePermutedGate):
+            module.sparsity_metrics.reset()
 
 def get_sparsity(model):
     for name, module in model.named_modules():
         if isinstance(module, SoftTreeGate):
+            return module.sparsity_metrics.compute()
+        elif isinstance(module, SoftTreePermutedGate):
             return module.sparsity_metrics.compute()
     return 0.0
 

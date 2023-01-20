@@ -99,7 +99,6 @@ then
     --report_to tensorboard \
     --evaluation_strategy epoch \
     --load_best_model_at_end False \
-    --save_total_limit 3 \
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \
     --seed $LOCAL_SEED \
@@ -137,7 +136,6 @@ else
     --evaluation_strategy steps \
     --eval_steps $9 \
     --save_strategy epoch \
-    --save_total_limit 3 \
     --load_best_model_at_end False \
     --metric_for_best_model $metric_for_best_model \
     --warmup_ratio 0.0 \

@@ -76,5 +76,8 @@ do
     args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $i --perm --ds $1)
 
     bash sh_scripts/experiments/base_perm_moebert_trainer.sh $1 $args $eval_steps $6 True 0 $7
+
+    echo "Done with Moebert Perm Experiment $i, deleting the intermediate checkpoints"
+    rm -r $7/$1/moebert_perm_experiment_$i/model/checkpoint-*
     
 done

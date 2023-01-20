@@ -35,6 +35,13 @@ def parse_args():
         help="If set, the script will aggregate the results of the experiments for permutation",
         default=False,
     )
+    parser.add_argument(
+        "--ktwo",
+        "-k",
+        action="store_true",
+        help="If set, the script will aggregate the results of the experiments for k=2",
+        default=False,
+    )
     return parser.parse_args()
 
 
@@ -80,12 +87,12 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_):
             sparsity = dict_["eval_sparsity"]
         except KeyError:
             continue
-        if not spars_:
+        if not spars_ and sparsity != -1.0:
             if score > best_score:
                 best_score = score
                 best_epoch = dict_["epoch"]
         else:
-            if score > best_score and np.abs(sparsity - 0.75) < 0.1:
+            if score > best_score and np.abs(sparsity - 0.75) < 0.1 and sparsity != -1.0:
                 best_score = score
                 best_epoch = dict_["epoch"]
 
@@ -96,11 +103,17 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_):
 
 
 def generate_best_results_table(args):
-    num_experiments = 52 if not args.advanced else 110
-    if not args.advanced:
-        range_of_exp = range(num_experiments + 1)
-    else:
+    if args.advanced or args.perm:
+        num_experiments = 110
         range_of_exp = list(range(num_experiments + 1)) + [1011, 1012, 1013, 1014, 1015, 1021, 1022, 1023, 1024, 1025, 1031, 1032, 1033, 1034, 1035, 1041, 1042, 1043, 1044, 1045, 1051, 1052, 1053, 1054, 1055]
+    elif args.ktwo:
+        num_experiments = 100
+        range_of_exp = [1011, 1012, 1013, 1014, 1015, 1021, 1022, 1023, 1024, 1025, 1031, 1032, 1033, 1034, 1035, 1041, 1042, 1043, 1044, 1045, 1051, 1052, 1053, 1054, 1055]
+    else:
+        num_experiments = 52
+        range_of_exp = range(num_experiments + 1)
+
+    
     dict_res = {
         "experiment": [i for i in range_of_exp],
     }
@@ -120,6 +133,8 @@ def generate_best_results_table(args):
                     path = f"results/{dataset_name}/moebert_perm_experiment_{experiment}/model"
                 elif args.advanced:
                     path = f"results/{dataset_name}/moebert_experiment_{experiment}/model"
+                elif args.ktwo:
+                    path = f"results/{dataset_name}/moebert_k2_experiment_{experiment}/model"
                 else:
                     path = f"results/{dataset_name}/experiment_{experiment}/model"
                 try:
@@ -131,8 +146,12 @@ def generate_best_results_table(args):
                         "epoch": 0,
                     }
                 try:
-                    with open(path + "/trainer_state.json") as f:
-                        train_log = json.load(f)
+                    if args.perm:
+                        with open(path + "/trainer_state_modified.json") as f:
+                            train_log = json.load(f)
+                    else:
+                        with open(path + "/trainer_state.json") as f:
+                            train_log = json.load(f)
                 except FileNotFoundError:
                     train_log = {"log_history": []}
                 best_score, best_epoch = get_best_result_json(
@@ -157,6 +176,10 @@ def generate_best_results_table(args):
             elif args.perm:
                 dataset_df.to_csv(
                     f"results/{dataset_name}/moebert_perm_results_aggregated_{dataset_name}.csv", index=False
+                )
+            elif args.ktwo:
+                dataset_df.to_csv(
+                    f"results/{dataset_name}/moebert_k2_results_aggregated_{dataset_name}.csv", index=False
                 )
             else:
                 dataset_df.to_csv(f"results/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
@@ -183,6 +206,11 @@ def generate_best_results_table(args):
                     pd.read_csv(f"results/{dataset_name}/moebert_perm_results_aggregated_{dataset_name}.csv"),
                     on="experiment",
                 )
+            elif args.ktwo:
+                df_fin = df_fin.merge(
+                    pd.read_csv(f"results/{dataset_name}/moebert_k2_results_aggregated_{dataset_name}.csv"),
+                    on="experiment",
+                )
             else:
                 df_fin = df_fin.merge(
                     pd.read_csv(f"results/{dataset_name}/results_aggregated_{dataset_name}.csv"),
@@ -197,35 +225,14 @@ def generate_best_results_table(args):
             df_fin.to_csv("results/moebert_results_aggregated.csv", index=False)
     elif args.perm:
         df_fin.to_csv("results/moebert_perm_results_aggregated.csv", index=False)
+    elif args.ktwo:
+        df_fin.to_csv("results/moebert_k2_results_aggregated.csv", index=False)
     else:
         df_fin.to_csv("results/results_aggregated.csv", index=False)
 
 
 def generate_best_results_summary(args):
-    if not args.advanced:
-        normal = pd.read_csv("results/results_aggregated.csv")
-        res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
-        for dataset_name in datasets_names:
-            try:
-                indice_best = normal[dataset_name + "_best_metric"].idxmax()
-                best_epoch = normal[dataset_name + "_best_epoch"][indice_best]
-                best_metric = normal[dataset_name + "_best_metric"][indice_best]
-                best_experiment = normal["experiment"][indice_best]
-                res = pd.concat(
-                    [
-                        res,
-                        pd.DataFrame(
-                            [[dataset_name, best_epoch, best_metric, best_experiment]],
-                            columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
-                        ),
-                    ],
-                    ignore_index=True,
-                )
-            except KeyError:
-                pass
-        res.to_csv("results/base_results_aggregated_summary.csv", index=False)
-
-    elif args.advanced:
+    if args.advanced:
         moebert_sparsity = pd.read_csv("results/moebert_results_aggregated_sparsity.csv")
         moebert = pd.read_csv("results/moebert_results_aggregated.csv")
         res_sparsity = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
@@ -289,6 +296,51 @@ def generate_best_results_summary(args):
             except KeyError:
                 pass
         res.to_csv("results/moebert_perm_results_aggregated_summary.csv", index=False)
+    elif args.ktwo:
+        moebert_ktwo = pd.read_csv("results/moebert_k2_results_aggregated.csv")
+        res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
+        for dataset_name in datasets_names:
+            try:
+                indice_best = moebert_ktwo[dataset_name + "_best_metric"].idxmax()
+                best_epoch = moebert_ktwo[dataset_name + "_best_epoch"][indice_best]
+                best_metric = moebert_ktwo[dataset_name + "_best_metric"][indice_best]
+                best_experiment = moebert_ktwo["experiment"][indice_best]
+                res = pd.concat(
+                    [
+                        res,
+                        pd.DataFrame(
+                            [[dataset_name, best_epoch, best_metric, best_experiment]],
+                            columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
+                        ),
+                    ],
+                    ignore_index=True,
+                )
+            except KeyError:
+                pass
+        res.to_csv("results/moebert_k2_results_aggregated_summary.csv", index=False)
+    else:
+        normal = pd.read_csv("results/results_aggregated.csv")
+        res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
+        for dataset_name in datasets_names:
+            try:
+                indice_best = normal[dataset_name + "_best_metric"].idxmax()
+                best_epoch = normal[dataset_name + "_best_epoch"][indice_best]
+                best_metric = normal[dataset_name + "_best_metric"][indice_best]
+                best_experiment = normal["experiment"][indice_best]
+                res = pd.concat(
+                    [
+                        res,
+                        pd.DataFrame(
+                            [[dataset_name, best_epoch, best_metric, best_experiment]],
+                            columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
+                        ),
+                    ],
+                    ignore_index=True,
+                )
+            except KeyError:
+                pass
+        res.to_csv("results/base_results_aggregated_summary.csv", index=False)
+
 
 
 def main(args):

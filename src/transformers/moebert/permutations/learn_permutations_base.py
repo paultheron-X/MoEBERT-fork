@@ -177,7 +177,8 @@ class LearnPermutationsBase(nn.Module):
             n_iters=n_iters,
             squeeze=True,
         )
-        self.permutation_weights = permutation_weights #nn.Parameter(permutation_weights, requires_grad=False)
+        
+        self.permutation_weights = nn.Parameter(permutation_weights, requires_grad=False)
 
         return permutation_weights
 
