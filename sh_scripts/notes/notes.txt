@@ -66,7 +66,7 @@ XXXXXX All dead because of Supercloud maintenance XXXXXX
 
 21141324 moebert_seeds_k2 ds=rte SR CPU
 
-21141334 moebert_seeds ds=qnli SR 
+21141334 moebert_seeds ds=qnli SR END 
 
 21141336 moebert_seeds ds=sst2 SR 
 
@@ -76,6 +76,8 @@ XXXXXX All dead because of Supercloud maintenance XXXXXX
 
 21141350 moebert_perm ds=mrpc SR 
 
-21141353 moebert_perm ds=sst2 SR 
+21141353 moebert_perm ds=sst2 SR version 2
 
 21141354 moebert_perm ds=qnli SR
+
+21172668 moebert_perm ds=sst2 SR version 3
