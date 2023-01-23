@@ -61,7 +61,12 @@ then
     then
         export num_epochs=25
     else
-        export num_epochs=15
+        if [ $1 = 'qnli' ]
+        then
+            export num_epochs=20
+        else
+            export num_epochs=15
+        fi
     fi
 else
     export num_epochs=10

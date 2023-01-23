@@ -69,7 +69,12 @@ for dataset in datasets_names:
                             if a["eval_loss"] == b["eval_loss"]:
                                 b['eval_sparsity'] = -1
                             else:
-                                pass
+                                '''if dataset in ["rte", "sst2", "qnli"] and experiment_name<30:
+                                    b['eval_sparsity'] = 0.75
+                                elif dataset in ["mrpc"] and experiment_name<22:
+                                    b['eval_sparsity'] = 0.75
+                                else:'''
+                                pass                                
                         except KeyError:
                             pass
             with open(f"results/{dataset}/moebert_perm_experiment_{experiment_name}/model/trainer_state_modified.json", "w") as f:

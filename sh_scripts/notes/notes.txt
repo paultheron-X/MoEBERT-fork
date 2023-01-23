@@ -64,11 +64,13 @@ XXXXXX All dead because of Supercloud maintenance XXXXXX
 
 --------------- New batch ---------------
 
-21141324 moebert_seeds_k2 ds=rte SR CPU
+21141324 moebert_seeds_k2 ds=rte SR CPU END
 
 21141334 moebert_seeds ds=qnli SR END 
 
-21141336 moebert_seeds ds=sst2 SR 
+21141336 moebert_seeds ds=sst2 SR END
+
+////
 
 21141342 moebert_seeds ds=qqp SR
 
@@ -81,3 +83,5 @@ XXXXXX All dead because of Supercloud maintenance XXXXXX
 21141354 moebert_perm ds=qnli SR
 
 21172668 moebert_perm ds=sst2 SR version 3
+
+21190150 moebert_seeds ds=qnli SR with 20 epochs
