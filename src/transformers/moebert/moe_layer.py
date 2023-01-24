@@ -21,6 +21,20 @@ class MoELayer(nn.Module):
             self.hash_list = self._random_hash_list(vocab_size)
         elif route_method == "hash-balance":
             self.hash_list = self._balance_hash_list(hash_list)
+        elif route_method == "hash-perm":
+            self.hash_list = self._random_hash_list(hash_list)
+            config_perm = {
+                "nb_experts": 4,
+                "k": 1,
+                "steps_per_epoch" : 1000,
+                "epochs_for_learning_permutation": perm_epoch,
+                "learn_k_permutations" : 1,
+                "noise_factor" : 0.0,
+                "perm_entropy_reg" : 1e-4
+
+            }
+            self.gate_perm = LearnPermutationsBase(config_perm)
+
         elif route_method in ["soft-tree"]:
             config = {
                 "k": k,
@@ -189,7 +203,34 @@ class MoELayer(nn.Module):
         x = y_agg.view(bsz, seq_len, dim)
 
         return x, regularization_loss + reg.to(regularization_loss.device), s_concat
-    
+
+    def _forward_hash_random_perm(self, x, input_ids):
+        bsz, seq_len, dim = x.size()
+        
+        # Create a routing method that mixes the hash random and the permutation gate
+        perm, reg = self.gate_perm.forward(x) # perm is a 1D tensor of size (bsz * seq_len)
+        perm = perm.to(x.device) # move perm to the same device as x
+        reg = reg.to(x.device) # move reg to the same device as x
+        
+        x = x.view(-1, dim)  # x is now a 2D tensor of size (bsz * seq_len, dim)
+        self.hash_list = self.hash_list.to(x.device)  # move hash_list to the same device as x
+        gate = self.hash_list[input_ids.view(-1)]  # gate is a 1D tensor of size (bsz * seq_len)
+
+        order = gate.argsort(0)  # order is a 1D tensor of size (bsz * seq_len)
+        num_tokens = F.one_hot(gate, self.num_experts).gt(0).sum(0)  # num_tokens is a 1D tensor of size (num_experts)
+        gate_load = num_tokens.clone()  # gate_load is a 1D tensor of size (num_experts)
+        x = x[order]  # reorder according to expert number
+        x = x.split(num_tokens.tolist(), dim=0)  # a list of length self.num_experts
+
+        x = [
+            self.experts[i].forward(x[i]) for i in range(self.num_experts)
+        ]  # x is a list of tensors of size (num_tokens[i], dim)
+        x = torch.vstack(x)  # x is now a 2D tensor of size (bsz * seq_len, dim)
+        x = x[order.argsort(0)]  # restore original order
+        x = x.view(bsz, seq_len, dim)  # x is now a 3D tensor of size (bsz, seq_len, dim)
+
+        return x, reg, gate_load  # return x, balance_loss, gate_load
+        
     def _forward_soft_tree_gate_perm_bis(self, x):
         
         # Do the process described above
