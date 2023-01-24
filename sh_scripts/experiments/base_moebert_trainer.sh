@@ -108,13 +108,12 @@ then
     --warmup_ratio 0.0 \
     --seed $LOCAL_SEED \
     --ignore_data_skip True \
-    --fp16 \
     --moebert moe \
     --moebert_distill $8 \
     --moebert_expert_num 4 \
     --moebert_expert_dim 768 \
     --moebert_expert_dropout 0.1 \
-    --moebert_load_balance 0.0 \
+    --moebert_load_balance 1.0 \
     --moebert_load_importance $original_model_dir/importance_$1.pkl \
     --moebert_route_method soft-tree \
     --moebert_share_importance 512 \
@@ -152,7 +151,7 @@ else
     --moebert_expert_num 4 \
     --moebert_expert_dim 768 \
     --moebert_expert_dropout 0.1 \
-    --moebert_load_balance 0.0 \
+    --moebert_load_balance 1.0 \
     --moebert_load_importance $original_model_dir/importance_$1.pkl \
     --moebert_route_method soft-tree \
     --moebert_share_importance 512 \
