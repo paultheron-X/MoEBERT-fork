@@ -233,9 +233,15 @@ class MoELayer(nn.Module):
         
         hash_perm = torch.unsqueeze(hash_perm, -1)  # gate_perm is now a 3D tensor of size (bsz * seq_len, num_experts, 1)
         
+        # reshape hash_perm to ((bsz * seq_len, 1, 1, num_experts)
+        hash_perm = hash_perm.view(bsz * seq_len, 1, 1, self.num_experts)
+        
+        # reshape h to (bsz * seq_len, dim, 1, nb_experts)
+        h = h.view(bsz * seq_len, dim, 1, self.num_experts)
+        
         gate_load = torch.sum(hash_perm, dim=0)  # gate_load is a 2D tensor of size (num_experts, 1)
         
-        h = torch.sum(h * hash_perm, dim=1)  # h is now a 2D tensor of size (bsz * seq_len, dim)
+        h = torch.sum(h * hash_perm, dim=[2, 3])  # (bsz * seq_len, dim, 1, nb_experts) -> (bsz * seq_len, dim)
         
         # 3. reform the tensor
         x = h.view(bsz, seq_len, dim)
