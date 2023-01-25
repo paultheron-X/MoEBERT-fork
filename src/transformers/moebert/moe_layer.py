@@ -207,26 +207,32 @@ class MoELayer(nn.Module):
     def _forward_hash_random_perm(self, x, input_ids):
         bsz, seq_len, dim = x.size()
         
-        # Create a routing method that mixes the hash random and the permutation gate
-        perm, reg = self.gate_perm.forward(x) # perm is a 1D tensor of size (bsz * seq_len)
+        # Create a routing method that integrates the hash function and the permutation
+        perm, reg = self.gate_perm.forward(x) # perm is a 1D tensor of size (num_experts, num_experts)
         perm = perm.to(x.device) # move perm to the same device as x
         reg = reg.to(x.device) # move reg to the same device as x
         
         x = x.view(-1, dim)  # x is now a 2D tensor of size (bsz * seq_len, dim)
         self.hash_list = self.hash_list.to(x.device)  # move hash_list to the same device as x
         gate = self.hash_list[input_ids.view(-1)]  # gate is a 1D tensor of size (bsz * seq_len)
-
-        order = gate.argsort(0)  # order is a 1D tensor of size (bsz * seq_len)
-        num_tokens = F.one_hot(gate, self.num_experts).gt(0).sum(0)  # num_tokens is a 1D tensor of size (num_experts)
-        gate_load = num_tokens.clone()  # gate_load is a 1D tensor of size (num_experts)
-        x = x[order]  # reorder according to expert number
+        
+        order = gate.argsort(0)  # order is a 1D tensor of size (bsz * seq_len) This is the index of the tokens sorted by the expert number
+        num_tokens = F.one_hot(gate, self.num_experts).gt(0).sum(0)  # num_tokens is a 1D tensor of size (num_experts) This is the number of tokens assigned to each expert
+        gate_load = num_tokens.clone()  # gate_load is a 1D tensor of size (num_experts)  This is the number of tokens assigned to each expert
+        x = x[order]  # reorder according to expert number (x is now a 2D tensor of size (bsz * seq_len, dim))
         x = x.split(num_tokens.tolist(), dim=0)  # a list of length self.num_experts
-
+        
         x = [
-            self.experts[i].forward(x[i]) for i in range(self.num_experts)
+            self.experts[i].forward(x[i])*perm[i] for i in range(self.num_experts)
         ]  # x is a list of tensors of size (num_tokens[i], dim)
-        x = torch.vstack(x)  # x is now a 2D tensor of size (bsz * seq_len, dim)
+        
+        x = [torch.unsqueeze(t, -1) for t in x]
+        x = torch.concat(x, dim=2)
+
+        x = torch.sum(x * perm, dim=[2, 3])  
+        
         x = x[order.argsort(0)]  # restore original order
+        
         x = x.view(bsz, seq_len, dim)  # x is now a 3D tensor of size (bsz, seq_len, dim)
 
         return x, reg, gate_load  # return x, balance_loss, gate_load
@@ -360,6 +366,8 @@ class MoELayer(nn.Module):
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm_bis(x)
         elif self.route_method == "soft-tree-oldpgate":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
+        elif self.route_method == "hash-perm":
+            x, balance_loss, gate_load = self._forward_hash_perm(x, input_ids)
         elif self.route_method == "soft-tree-sentence":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_sentence(x, attention_mask)
         elif self.route_method == "gate-sentence":
