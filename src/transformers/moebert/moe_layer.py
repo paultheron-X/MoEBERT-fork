@@ -22,7 +22,7 @@ class MoELayer(nn.Module):
         elif route_method == "hash-balance":
             self.hash_list = self._balance_hash_list(hash_list)
         elif route_method == "hash-p":
-            self.hash_list = self._random_hash_list(hash_list)
+            self.hash_list = self._random_hash_list(vocab_size)
             config_perm = {
                 "nb_experts": 4,
                 "k": 1,
@@ -223,11 +223,12 @@ class MoELayer(nn.Module):
         x = x.split(num_tokens.tolist(), dim=0)  # a list of length self.num_experts
         
         x = [
-            self.experts[i].forward(x[i])*perm[i] for i in range(self.num_experts)
-        ]  # x is a list of tensors of size (num_tokens[i], dim)
+            self.experts[i].forward(x[i]) for i in range(self.num_experts)
+        ]  # x is a list of tensors of size (num_tokens[i], dim) where sum(num_tokens) = bsz * seq_len
         
-        x = [torch.unsqueeze(t, -1) for t in x]
-        x = torch.concat(x, dim=2)
+        x = [torch.unsqueeze(t, -1) for t in x] # x is a list of tensors of size (num_tokens[i], dim, 1)
+        
+        x = torch.vstack(x)  # x is now a 4D tensor of size (num_experts, num_tokens[i], dim, 1) # does not work because of the different number of tokens per expert
 
         x = torch.sum(x * perm, dim=[2, 3])  
         
@@ -367,7 +368,7 @@ class MoELayer(nn.Module):
         elif self.route_method == "soft-tree-oldpgate":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
         elif self.route_method == "hash-p":
-            x, balance_loss, gate_load = self._forward_hash_perm(x, input_ids)
+            x, balance_loss, gate_load = self._forward_hash_random_perm(x, input_ids)
         elif self.route_method == "soft-tree-sentence":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_sentence(x, attention_mask)
         elif self.route_method == "gate-sentence":
