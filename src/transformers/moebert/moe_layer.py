@@ -216,21 +216,30 @@ class MoELayer(nn.Module):
         self.hash_list = self.hash_list.to(x.device)  # move hash_list to the same device as x
         gate = self.hash_list[input_ids.view(-1)]  # gate is a 1D tensor of size (bsz * seq_len)
         
-        order = gate.argsort(0)  # order is a 1D tensor of size (bsz * seq_len) This is the index of the tokens sorted by the expert number
+        #order = gate.argsort(0)  # order is a 1D tensor of size (bsz * seq_len) This is the index of the tokens sorted by the expert number
         num_tokens = F.one_hot(gate, self.num_experts).gt(0).sum(0)  # num_tokens is a 1D tensor of size (num_experts) This is the number of tokens assigned to each expert
+        # apply perm to num_tokens
+        num_tokens = torch.matmul(num_tokens, perm)  # num_tokens is a 1D tensor of size (num_experts) This is the number of tokens assigned to each expert
+        
+        # extract the order from num_tokens
+        order = torch.argsort(num_tokens)  # order is a 1D tensor of size (num_experts) This is the index of the experts sorted by the number of tokens assigned to each expert
+        
         gate_load = num_tokens.clone()  # gate_load is a 1D tensor of size (num_experts)  This is the number of tokens assigned to each expert
         x = x[order]  # reorder according to expert number (x is now a 2D tensor of size (bsz * seq_len, dim))
         x = x.split(num_tokens.tolist(), dim=0)  # a list of length self.num_experts
-        
         x = [
             self.experts[i].forward(x[i]) for i in range(self.num_experts)
-        ]  # x is a list of tensors of size (num_tokens[i], dim) where sum(num_tokens) = bsz * seq_len
+        ]
         
-        x = [torch.unsqueeze(t, -1) for t in x] # x is a list of tensors of size (num_tokens[i], dim, 1)
+        '''x = [
+            self.experts[i].forward(x) for i in range(self.num_experts)
+        ]  # x is a list of tensors of size (bsz*seq_length, dim)
         
-        x = torch.vstack(x)  # x is now a 4D tensor of size (num_experts, num_tokens[i], dim, 1) # does not work because of the different number of tokens per expert
+        x = [torch.unsqueeze(t, -1) for t in x] # x is a list of tensors of size (bsz*seq_length, dim, 1)
+        
+        x = torch.cat(x, dim=2)  # x is now a 3D tensor of size (bsz*seq_length, dim, num_experts)
 
-        x = torch.sum(x * perm, dim=[2, 3])  
+        x = torch.sum(x * perm, dim=[2, 3])'''
         
         x = x[order.argsort(0)]  # restore original order
         
