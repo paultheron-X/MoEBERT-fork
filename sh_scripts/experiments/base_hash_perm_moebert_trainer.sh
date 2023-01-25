@@ -12,24 +12,25 @@ echo "learning rate is $5"
 echo "entropy is $6"
 echo "gamma is $7"
 echo "distillation penalty is $8"
-echo "eval steps is $9"
-echo "1st stage best epoch is ${10}"
-echo "Mode large is ${11}"
-echo "Seed is ${12}"
-echo "Given Output dir is ${13}"
+echo "Learn permutation epoch is $9"
+echo "eval steps is ${10}"
+echo "1st stage best epoch is ${11}"
+echo "Mode large is ${12}"
+echo "Seed is ${13}"
+echo "Given Output dir is ${14}"
 
 # check if the parameter 13 for output dir is passed or not
-if [ -z "${13}" ]
+if [ -z "${14}" ]
 then
     echo "No output dir passed"
     export LOCAL_OUTPUT="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 else
-    echo "Given Output dir is ${13}"
-    export LOCAL_OUTPUT=${13}
+    echo "Given Output dir is ${14}"
+    export LOCAL_OUTPUT=${14}
 fi
 
 export output_dir="$LOCAL_OUTPUT/$1"
-export saving_dir=$output_dir/"moebert_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
+export saving_dir=$output_dir/"moebert_hash_perm_experiment_$2" # Must correspond to the line in the excel hyperparameter tuning file
 export original_model_dir=$output_dir/"experiment_$1_finetuned_model"
 
 if [ $1 = 'cola' ]
@@ -55,31 +56,26 @@ then
     export metric_for_best_model="accuracy"
 fi
 
-if [ ${11} = 'True' ]
+if [ ${12} = 'True' ]
 then
     if [ $1 = 'sst2' ]
     then
         export num_epochs=25
     else
-        if [ $1 = 'qnli' ]
-        then
-            export num_epochs=20
-        else
-            export num_epochs=15
-        fi
+        export num_epochs=15
     fi
 else
     export num_epochs=10
 fi
 
 # check if the parameter 12 is passed or not
-if [ -z "${12}" ]
+if [ -z "${13}" ]
 then
     echo "No seed passed"
     export LOCAL_SEED=0
 else
-    echo "Seed passed is ${12}"
-    export LOCAL_SEED=${12}
+    echo "Seed passed is ${13}"
+    export LOCAL_SEED=${13}
 fi
 
 echo "Number of epochs is $num_epochs"
@@ -115,10 +111,11 @@ then
     --moebert_expert_dropout 0.1 \
     --moebert_load_balance 0.1 \
     --moebert_load_importance $original_model_dir/importance_$1.pkl \
-    --moebert_route_method soft-tree \
+    --moebert_route_method hash-p \
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
-    --moebert_gate_gamma $7
+    --moebert_gate_gamma $7 \
+    --moebert_perm_epoch $9
 else
     python -m torch.distributed.launch --nproc_per_node=$num_gpus
     examples/text-classification/run_glue.py \
@@ -138,7 +135,7 @@ else
     --logging_dir $saving_dir/log \
     --report_to tensorboard \
     --evaluation_strategy steps \
-    --eval_steps $9 \
+    --eval_steps ${10} \
     --save_strategy epoch \
     --load_best_model_at_end False \
     --metric_for_best_model $metric_for_best_model \
@@ -153,8 +150,9 @@ else
     --moebert_expert_dropout 0.1 \
     --moebert_load_balance 0.1 \
     --moebert_load_importance $original_model_dir/importance_$1.pkl \
-    --moebert_route_method soft-tree \
+    --moebert_route_method hash-p \
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
-    --moebert_gate_gamma $7
+    --moebert_gate_gamma $7 \
+    --moebert_perm_epoch $9
 fi

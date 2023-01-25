@@ -42,6 +42,12 @@ def parse_args():
         help="If set, the script will aggregate the results of the experiments for k=2",
         default=False,
     )
+    parser.add_argument(
+        "--hash",
+        action="store_true",
+        help="If set, the script will aggregate the results of the experiments for hash",
+        default=False,
+    )
     return parser.parse_args()
 
 
@@ -107,7 +113,7 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_, k2):
 
 
 def generate_best_results_table(args):
-    if args.advanced or args.perm:
+    if args.advanced or args.perm or args.hash:
         num_experiments = 110
         range_of_exp = list(range(num_experiments + 1)) + [1011, 1012, 1013, 1014, 1015, 1021, 1022, 1023, 1024, 1025, 1031, 1032, 1033, 1034, 1035, 1041, 1042, 1043, 1044, 1045, 1051, 1052, 1053, 1054, 1055]
     elif args.ktwo:
@@ -139,6 +145,8 @@ def generate_best_results_table(args):
                     path = f"results/{dataset_name}/moebert_experiment_{experiment}/model"
                 elif args.ktwo:
                     path = f"results/{dataset_name}/moebert_k2_experiment_{experiment}/model"
+                elif args.hash:
+                    path = f"results/{dataset_name}/moebert_hash_experiment_{experiment}/model"
                 else:
                     path = f"results/{dataset_name}/experiment_{experiment}/model"
                 try:
@@ -197,6 +205,16 @@ def generate_best_results_table(args):
                     dataset_df.to_csv(
                         f"results/{dataset_name}/moebert_k2_results_aggregated_{dataset_name}.csv", index=False
                     )
+            elif args.hash:
+                if args.sparsity:
+                    dataset_df.to_csv(
+                        f"results/{dataset_name}/moebert_hash_results_aggregated_{dataset_name}_sparsity.csv",
+                        index=False,
+                    )
+                else:
+                    dataset_df.to_csv(
+                        f"results/{dataset_name}/moebert_hash_results_aggregated_{dataset_name}.csv", index=False
+                    )
             else:
                 dataset_df.to_csv(f"results/{dataset_name}/results_aggregated_{dataset_name}.csv", index=False)
 
@@ -243,6 +261,19 @@ def generate_best_results_table(args):
                         pd.read_csv(f"results/{dataset_name}/moebert_k2_results_aggregated_{dataset_name}.csv"),
                         on="experiment",
                     )
+            elif args.hash:
+                if args.sparsity:
+                    df_fin = df_fin.merge(
+                        pd.read_csv(
+                            f"results/{dataset_name}/moebert_hash_results_aggregated_{dataset_name}_sparsity.csv"
+                        ),
+                        on="experiment",
+                    )
+                else:
+                    df_fin = df_fin.merge(
+                        pd.read_csv(f"results/{dataset_name}/moebert_hash_results_aggregated_{dataset_name}.csv"),
+                        on="experiment",
+                    )
             else:
                 df_fin = df_fin.merge(
                     pd.read_csv(f"results/{dataset_name}/results_aggregated_{dataset_name}.csv"),
@@ -265,6 +296,11 @@ def generate_best_results_table(args):
             df_fin.to_csv("results/moebert_k2_results_aggregated_sparsity.csv", index=False)
         else:
             df_fin.to_csv("results/moebert_k2_results_aggregated.csv", index=False)
+    elif args.hash:
+        if args.sparsity:
+            df_fin.to_csv("results/moebert_hash_results_aggregated_sparsity.csv", index=False)
+        else:
+            df_fin.to_csv("results/moebert_hash_results_aggregated.csv", index=False)
     else:
         df_fin.to_csv("results/results_aggregated.csv", index=False)
 
@@ -402,6 +438,51 @@ def generate_best_results_summary(args):
                 except KeyError:
                     pass
             res.to_csv("results/moebert_k2_results_aggregated_summary.csv", index=False)
+    elif args.hash:
+        if args.sparsity:
+            moebert_sparsity = pd.read_csv("results/moebert_hash_results_aggregated_sparsity.csv")
+            res_sparsity = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
+            for dataset_name in datasets_names:
+                try:
+                    indice_best = moebert_sparsity[dataset_name + "_best_metric"].idxmax()
+                    best_epoch = moebert_sparsity[dataset_name + "_best_epoch"][indice_best]
+                    best_metric = moebert_sparsity[dataset_name + "_best_metric"][indice_best]
+                    best_experiment = moebert_sparsity["experiment"][indice_best]
+                    res_sparsity = pd.concat(
+                        [
+                            res_sparsity,
+                            pd.DataFrame(
+                                [[dataset_name, best_epoch, best_metric, best_experiment]],
+                                columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
+                            ),
+                        ],
+                        ignore_index=True,
+                    )
+                except KeyError:
+                    pass
+            res_sparsity.to_csv("results/moebert_hash_results_aggregated_sparsity_summary.csv", index=False)
+        else:
+            moebert = pd.read_csv("results/moebert_hash_results_aggregated.csv")
+            res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])
+            for dataset_name in datasets_names:
+                try:
+                    indice_best = moebert[dataset_name + "_best_metric"].idxmax()
+                    best_epoch = moebert[dataset_name + "_best_epoch"][indice_best]
+                    best_metric = moebert[dataset_name + "_best_metric"][indice_best]
+                    best_experiment = moebert["experiment"][indice_best]
+                    res = pd.concat(
+                        [
+                            res,
+                            pd.DataFrame(
+                                [[dataset_name, best_epoch, best_metric, best_experiment]],
+                                columns=["dataset", "best_epoch", "best_metric", "best_experiment"],
+                            ),
+                        ],
+                        ignore_index=True,
+                    )
+                except KeyError:
+                    pass
+            res.to_csv("results/moebert_hash_results_aggregated_summary.csv", index=False)
     else:
         normal = pd.read_csv("results/results_aggregated.csv")
         res = pd.DataFrame(columns=["dataset", "best_epoch", "best_metric", "best_experiment"])

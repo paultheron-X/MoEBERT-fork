@@ -21,7 +21,7 @@ class MoELayer(nn.Module):
             self.hash_list = self._random_hash_list(vocab_size)
         elif route_method == "hash-balance":
             self.hash_list = self._balance_hash_list(hash_list)
-        elif route_method == "hash-perm":
+        elif route_method == "hash-p":
             self.hash_list = self._random_hash_list(hash_list)
             config_perm = {
                 "nb_experts": 4,
@@ -366,7 +366,7 @@ class MoELayer(nn.Module):
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm_bis(x)
         elif self.route_method == "soft-tree-oldpgate":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
-        elif self.route_method == "hash-perm":
+        elif self.route_method == "hash-p":
             x, balance_loss, gate_load = self._forward_hash_perm(x, input_ids)
         elif self.route_method == "soft-tree-sentence":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_sentence(x, attention_mask)
