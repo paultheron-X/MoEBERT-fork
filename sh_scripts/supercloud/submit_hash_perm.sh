@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #SBATCH -N 1
-#SBATCH --job-name test_hash_perm
+#SBATCH --job-name expermiment_hash_perm_$1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=20
 #SBATCH --time=21-00:00
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=paulth@mit.edu
-#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/test_hash_perm_$1_out%j.txt
-#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/test_hash_perm_$1_err%j.txt
+#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/expermiment_hash_perm_$1_out%j.txt
+#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/expermiment_hash_perm_$1_err%j.txt
 
 echo "Launching Hash perm finetuning for dataset $1"
 

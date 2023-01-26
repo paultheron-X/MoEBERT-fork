@@ -9,8 +9,8 @@ LOG_PATH = f"{PATH}/logs"
 
 
 exit_code = 1
-name = "submit_hash" # name of the template do not precise the .sh
-ds = ['rte','mrpc','sst2']
+name = "submit_hash_perm" # name of the template do not precise the .sh
+ds = ['sst2']#['rte','mrpc','sst2']
 to_run = [1, 2, 3, 4, 5]
 
 #quit()  # to avoid running the script
@@ -32,3 +32,7 @@ for i in to_run:
             time.sleep(50000)
             
 print("submitted jobs:", submitted)
+
+#['21212106', '21212107', '21212108', '21212109', '21212110', '21212111', '21212112', '21212113', '21212114', '21212115', '21212116', '21212117', '21212118', '21212119', '21212120']
+
+#submitted jobs: ['21213146', '21213147', '21213148', '21213149', '21213150']

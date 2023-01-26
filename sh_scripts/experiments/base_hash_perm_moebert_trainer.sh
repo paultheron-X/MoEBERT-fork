@@ -1,6 +1,5 @@
 #!/bin/bash
 
-export num_gpus=3
 export CUBLAS_WORKSPACE_CONFIG=":16:8" # https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
 export PYTHONHASHSEED=0
 echo "Script name is: $0"
@@ -117,8 +116,7 @@ then
     --moebert_gate_gamma $7 \
     --moebert_perm_epoch $9
 else
-    python -m torch.distributed.launch --nproc_per_node=$num_gpus
-    examples/text-classification/run_glue.py \
+    python examples/text-classification/run_glue.py \
     --model_name_or_path $original_model_dir/model \
     --task_name $1 \
     --per_device_train_batch_size $3 \
@@ -142,7 +140,6 @@ else
     --warmup_ratio 0.0 \
     --seed $LOCAL_SEED \
     --ignore_data_skip True \
-    --fp16 \
     --moebert moe \
     --moebert_distill $8 \
     --moebert_expert_num 4 \

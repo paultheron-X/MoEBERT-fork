@@ -20,3 +20,6 @@ python sh_scripts/python_helpers/preprocess_sparsity_error.py
 python sh_scripts/python_helpers/get_results.py --perm
     # Sparsity
 python sh_scripts/python_helpers/get_results.py --perm --sparsity
+
+# Get the experiments from hash
+python sh_scripts/python_helpers/get_results.py --hash
