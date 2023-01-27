@@ -23,3 +23,5 @@ python sh_scripts/python_helpers/get_results.py --perm --sparsity
 
 # Get the experiments from hash
 python sh_scripts/python_helpers/get_results.py --hash
+
+python sh_scripts/python_helpers/get_results.py --hashp

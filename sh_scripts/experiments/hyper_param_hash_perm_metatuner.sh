@@ -66,7 +66,7 @@ echo "Now starting distillation for task $1"
 
 echo "Launching Experiment Set $2"
 
-BEGIN=$((20*$2 + -19))
+BEGIN=$((20*$2 + -16))
 END=$((20*$2))
 
 
@@ -78,6 +78,6 @@ do
     bash sh_scripts/experiments/base_hash_perm_moebert_trainer.sh $1 $args $eval_steps $6 True 0 $7
 
     echo "Done with Moebert Perm Experiment $i, deleting the intermediate checkpoints"
-    rm -r $7/$1/moebert_perm_experiment_$i/model/checkpoint-*
+    rm -r $7/$1/moebert_hash_perm_experiment_$i/model/checkpoint-*
     
 done

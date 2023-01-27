@@ -84,7 +84,7 @@ fi
 
 echo "Number of epochs is $num_epochs"
 
-if [ $1 = 'cola' ] || [ $1 = 'rte' ] || [ $1 = 'mrpc' ]
+if [ $1 = 'cola' ] || [ $1 = 'rte' ]
 then
     python examples/text-classification/run_glue.py \
     --model_name_or_path $original_model_dir/model \
@@ -120,41 +120,79 @@ then
     --moebert_gate_entropy $6 \
     --moebert_gate_gamma $7
 else
-    python -m torch.distributed.launch --nproc_per_node=$num_gpus
-    examples/text-classification/run_glue.py \
-    --model_name_or_path $original_model_dir/model \
-    --task_name $1 \
-    --per_device_train_batch_size $3 \
-    --weight_decay $4 \
-    --learning_rate $5 \
-    --do_train \
-    --do_eval \
-    --do_predict \
-    --max_seq_length 128 \
-    --num_train_epochs $num_epochs \
-    --output_dir $saving_dir/model \
-    --overwrite_output_dir \
-    --logging_steps 20 \
-    --logging_dir $saving_dir/log \
-    --report_to tensorboard \
-    --evaluation_strategy steps \
-    --eval_steps $9 \
-    --save_strategy epoch \
-    --load_best_model_at_end False \
-    --metric_for_best_model $metric_for_best_model \
-    --warmup_ratio 0.0 \
-    --seed $LOCAL_SEED \
-    --ignore_data_skip True \
-    --fp16 \
-    --moebert moe \
-    --moebert_distill $8 \
-    --moebert_expert_num 4 \
-    --moebert_expert_dim 768 \
-    --moebert_expert_dropout 0.1 \
-    --moebert_load_balance 0.1 \
-    --moebert_load_importance $original_model_dir/importance_$1.pkl \
-    --moebert_route_method soft-tree \
-    --moebert_share_importance 512 \
-    --moebert_gate_entropy $6 \
-    --moebert_gate_gamma $7
+    if [ $1 = 'mrpc' ]
+    then
+        python examples/text-classification/run_glue.py \
+        --model_name_or_path $original_model_dir/model \
+        --task_name $1 \
+        --per_device_train_batch_size $3 \
+        --weight_decay $4 \
+        --learning_rate $5 \
+        --do_train \
+        --do_eval \
+        --do_predict \
+        --max_seq_length 128 \
+        --num_train_epochs 50 \
+        --output_dir $saving_dir/model \
+        --overwrite_output_dir \
+        --logging_steps 20 \
+        --logging_dir $saving_dir/log \
+        --report_to tensorboard \
+        --evaluation_strategy epoch \
+        --load_best_model_at_end False \
+        --metric_for_best_model $metric_for_best_model \
+        --warmup_ratio 0.0 \
+        --seed $LOCAL_SEED \
+        --ignore_data_skip True \
+        --fp16 \
+        --moebert moe \
+        --moebert_distill $8 \
+        --moebert_expert_num 4 \
+        --moebert_expert_dim 768 \
+        --moebert_expert_dropout 0.1 \
+        --moebert_load_balance 0.1 \
+        --moebert_load_importance $original_model_dir/importance_$1.pkl \
+        --moebert_route_method soft-tree \
+        --moebert_share_importance 512 \
+        --moebert_gate_entropy $6 \
+        --moebert_gate_gamma $7
+    else
+        python -m torch.distributed.launch --nproc_per_node=$num_gpus
+        examples/text-classification/run_glue.py \
+        --model_name_or_path $original_model_dir/model \
+        --task_name $1 \
+        --per_device_train_batch_size $3 \
+        --weight_decay $4 \
+        --learning_rate $5 \
+        --do_train \
+        --do_eval \
+        --do_predict \
+        --max_seq_length 128 \
+        --num_train_epochs $num_epochs \
+        --output_dir $saving_dir/model \
+        --overwrite_output_dir \
+        --logging_steps 20 \
+        --logging_dir $saving_dir/log \
+        --report_to tensorboard \
+        --evaluation_strategy steps \
+        --eval_steps $9 \
+        --save_strategy epoch \
+        --load_best_model_at_end False \
+        --metric_for_best_model $metric_for_best_model \
+        --warmup_ratio 0.0 \
+        --seed $LOCAL_SEED \
+        --ignore_data_skip True \
+        --fp16 \
+        --moebert moe \
+        --moebert_distill $8 \
+        --moebert_expert_num 4 \
+        --moebert_expert_dim 768 \
+        --moebert_expert_dropout 0.1 \
+        --moebert_load_balance 0.1 \
+        --moebert_load_importance $original_model_dir/importance_$1.pkl \
+        --moebert_route_method soft-tree \
+        --moebert_share_importance 512 \
+        --moebert_gate_entropy $6 \
+        --moebert_gate_gamma $7
+    fi
 fi

@@ -9,8 +9,8 @@ LOG_PATH = f"{PATH}/logs"
 
 
 exit_code = 1
-name = "submit_hash_perm" # name of the template do not precise the .sh
-ds = ['sst2']#['rte','mrpc','sst2']
+name = "submit_hash" # name of the template do not precise the .sh
+ds = ['sst2']#['rte','mrpc','sst2'] #['mrpc']#['rte','mrpc','sst2']
 to_run = [1, 2, 3, 4, 5]
 
 #quit()  # to avoid running the script
@@ -24,7 +24,7 @@ for i in to_run:
             exit_code = process.wait()
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),output,err)
             if exit_code == 0:
-                print(f"submitted hash routing! {ds_name} {i}")
+                print(f"submitted {name} ! {ds_name} {i}")
                 tmp_id = str(output)[-11:-3]
                 print("job id:", tmp_id)
                 submitted.append(tmp_id)
@@ -33,6 +33,11 @@ for i in to_run:
             
 print("submitted jobs:", submitted)
 
-#['21212106', '21212107', '21212108', '21212109', '21212110', '21212111', '21212112', '21212113', '21212114', '21212115', '21212116', '21212117', '21212118', '21212119', '21212120']
 
-#submitted jobs: ['21213146', '21213147', '21213148', '21213149', '21213150']
+
+#submitted jobs: ['21236632', '21236633', '21236634', '21236635', '21236636']
+
+# hash perm ['21236712', '21236713', '21236714', '21236715', '21236716', '21236717', '21236718', '21236719', '21236720', '21236722', '21236723', '21236724', '21236725', '21236726', '21236727']
+
+# hash sst2 ['21236843', '21236844', '21236845', '21236846', '21236847']
+

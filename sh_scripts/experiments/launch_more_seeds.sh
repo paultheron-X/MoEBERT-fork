@@ -26,7 +26,7 @@ then
     bash sh_scripts/experiments/base_finetuning.sh qqp 1 2e-5 16 0.1 2 $2
     export eval_steps=2000
     declare -a StringArray=("10" "23" "35" "49" "88")
-    for ((i=0; i<${#StringArray[@]}; i++)); do
+    for ((i=1; i<${#StringArray[@]}; i++)); do
     # Access the current element of the array using the index variable
         element=${StringArray[$i]}
         j=$((i+1))

@@ -66,7 +66,7 @@ echo "Now starting distillation for task $1"
 
 echo "Launching Experiment Set $2"
 
-BEGIN=$((20*$2 + -19))
+BEGIN=$((20*$2 + -16))
 END=$((20*$2))
 
 
@@ -76,4 +76,7 @@ do
     args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $i)
 
     bash sh_scripts/experiments/base_moebert_hash_trainer.sh $1 $args $eval_steps $6 True
+
+    echo "Done with Moebert Perm Experiment $i, deleting the intermediate checkpoints"
+    rm -r $7/$1/moebert_hash_experiment_$i/model/checkpoint-*
 done

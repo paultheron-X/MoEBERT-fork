@@ -6,6 +6,7 @@ echo "Best lr was $3"
 echo "Best batch size was $4"
 echo "Best weight decay was $5"
 echo "Best epoch was $6"
+echo "Output dir is $7"
 
 if [ $1 = "mnli" ] 
 then
@@ -31,21 +32,29 @@ then
 fi
 
 
-# Check if we have a finetuned model for this task
-if [ -d "/home/paultheron/MoEBERT-fork/results/experiment_$1_finetuned_model/model" ]
+if [ -d "$7/$1/experiment_$1_finetuned_model/model" ]
 then
     echo "Finetuned model already exists for task $1"
+    if [ -f "$7/$1/experiment_$1_finetuned_model/importance_$1.pkl" ]
+    then
+        echo "Importance already exists for task $1"
+    else
+        echo "Importance does not exist for task $1"
+        echo "Now preprocessing importance for this task"
+        bash sh_scripts/experiments/importance_preprocess.sh $1 $7
+        python merge_importance.py --task $1 --num_files 1 
+    fi
 else
     echo "Finetuned model does not exist for task $1"
     echo "Creating finetuned model for task $1"
 
-    bash sh_scripts/experiments/base_trainer.sh $1 "$1_finetuned_model" $4 $5 $3 $eval_steps
+    bash sh_scripts/experiments/base_trainer.sh $1 "$1_finetuned_model" $4 $5 $3 $eval_steps $7
 
     echo "Finetuned model created for task $1"
     echo "Now preprocessing importance for this task"
-    bash sh_scripts/experiments/importance_preprocess.sh $1
+    bash sh_scripts/experiments/importance_preprocess.sh $1 $7
 
-    python merge_importance.py --task $1 --num_files 3
+    python merge_importance.py --task $1 --num_files 1 
     
     echo "Finetuned model created for task $1"
 
@@ -56,7 +65,7 @@ echo "Now starting distillation for task $1"
 
 echo "Launching Experiment Set $2"
 
-BEGIN=$((20*$2 + -19))
+BEGIN=$((20*$2 + -9))  # modified to catch up for the missed experiments
 END=$((20*$2))
 
 
@@ -66,4 +75,7 @@ do
     args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $i)
 
     bash sh_scripts/experiments/base_moebert_trainer.sh $1 $args $eval_steps $6 True
+
+    echo "Done with Moebert Experiment $i, deleting the intermediate checkpoints"
+    rm -r $7/$1/moebert_experiment_$i/model/checkpoint-*
 done
