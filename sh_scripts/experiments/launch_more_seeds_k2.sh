@@ -34,6 +34,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer_k2.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_k2_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done   
 elif [ $1 = "sst2" ]
@@ -49,6 +52,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer_k2.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_k2_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done   
 elif [ $1 = "mnli" ]
@@ -64,6 +70,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer_k2.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_k2_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done   
 elif [ $1 = "rte" ]
@@ -100,6 +109,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer_k2.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_k2_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done    
 elif [ $1 = "mrpc" ]
@@ -116,6 +128,9 @@ then
         do
             args=$(python sh_scripts/python_helpers/launch_job_from_grid.py -n $element --exp 10$j$l)
             bash sh_scripts/experiments/base_moebert_trainer_k2.sh $1 $args $eval_steps 2 True $l $2
+            echo "Done with training for that experiment, deleting the intermediate checkpoints"
+            rm -rf $2/$1/moebert_k2_experiment_10$j$l/model/checkpoint-*
+            echo "Done with deleting the intermediate checkpoints"
         done
     done    
 fi

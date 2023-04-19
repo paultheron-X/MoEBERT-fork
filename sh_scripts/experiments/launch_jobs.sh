@@ -39,5 +39,8 @@ then
 elif [ $1 = 'mrpcbig' ]
 then
     bash sh_scripts/experiments/hyper_param_distil_metatuner.sh mrpc $experiment_set 4e-5 8 0 2 $2
+elif [ $1 = 'squad_v2' ]
+then 
+    bash sh_scripts/experiments/hyper_param_distil_metatuner_squad.sh squad_v2 $experiment_set 4e-5 8 0 2 $2  # we dont care of the params 4e-5 8 0 2
 fi
 

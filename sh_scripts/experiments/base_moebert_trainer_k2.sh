@@ -102,6 +102,7 @@ then
     --warmup_ratio 0.0 \
     --seed $LOCAL_SEED \
     --ignore_data_skip True \
+    --fp16 \
     --moebert moe \
     --moebert_distill $8 \
     --moebert_expert_num 4 \
@@ -140,6 +141,7 @@ else
     --warmup_ratio 0.0 \
     --seed $LOCAL_SEED \
     --ignore_data_skip True \
+    --fp16 \
     --moebert moe \
     --moebert_distill $8 \
     --moebert_expert_num 4 \
@@ -150,5 +152,6 @@ else
     --moebert_route_method soft-tree \
     --moebert_share_importance 512 \
     --moebert_gate_entropy $6 \
-    --moebert_gate_gamma $7
+    --moebert_gate_gamma $7 \
+    --moebert_k 2
 fi

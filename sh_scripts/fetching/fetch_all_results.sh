@@ -1,6 +1,6 @@
 if [ $1 = "all" ]
 then 
-    declare -a StringArray=( "cola" "mnli" "qqp" "qnli" "rte" "sst-2" "squad" "mnli-bis" "qqp-bis")
+    declare -a StringArray=("squad" "cola" "mnli" "qqp" "qnli" "rte" "sst-2" "squad" "mnli-bis" "qqp-bis")
     for ds in ${StringArray[@]};
     do
         for j in {1..40}

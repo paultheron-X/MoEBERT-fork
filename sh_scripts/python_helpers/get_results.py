@@ -58,12 +58,12 @@ def parse_args():
     return parser.parse_args()
 
 
-datasets_names = [
+datasets_names_old = [
     "rte",
     "cola",
     "sst2",
     "mrpc",
-    "squad",
+    "squad_v2",
     "rte-true",
     "mnli",
     "mnli-bis",
@@ -72,6 +72,10 @@ datasets_names = [
     "qqp",
     "qqp-bis",
     "qqp-bis-bis"
+]
+
+datasets_names = [
+    "squad_v2"
 ]
 
 metric_dict = {
@@ -83,6 +87,7 @@ metric_dict = {
     "qnli": "accuracy",
     "rte": "accuracy",
     "squad": "f1",
+    "squad_v2": "f1",
     "mnli-bis": "accuracy",
     "qqp-bis": "f1",
     "qnli-bis": "accuracy",
@@ -96,7 +101,9 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_, k2):
     best_epoch = 0
     for ind, dict_ in enumerate(train_log["log_history"]):
         try:
-            score = dict_["eval_" + metric_dict[dataset_name]]
+            #score = dict_["eval_" + metric_dict[dataset_name]]
+            score = dict_["best_" + metric_dict[dataset_name]]
+            print(score)
             sparsity = dict_["eval_sparsity"]
         except KeyError:
             continue
@@ -114,7 +121,7 @@ def get_best_result_json(all_results, train_log, dataset_name, spars_, k2):
                 best_epoch = dict_["epoch"]
 
     if best_score == 0:
-        best_score = all_results["eval_" + metric_dict[dataset_name]]
+        best_score = all_results["best_" + metric_dict[dataset_name]]
         best_epoch = all_results["epoch"]
     return best_score, best_epoch
 
@@ -137,7 +144,7 @@ def generate_best_results_table(args):
 
     for dataset_name in datasets_names:
         # check if the directory exists
-        if not os.path.exists("results/" + dataset_name):
+        if dataset_name == "squad":
             continue
         else:
             dict_res_dataset = {
@@ -150,6 +157,7 @@ def generate_best_results_table(args):
                     path = f"results/{dataset_name}/moebert_perm_experiment_{experiment}/model"
                 elif args.advanced:
                     path = f"results/{dataset_name}/moebert_experiment_{experiment}/model"
+                    print(path)
                 elif args.ktwo:
                     path = f"results/{dataset_name}/moebert_k2_experiment_{experiment}/model"
                 elif args.hash:
@@ -157,17 +165,17 @@ def generate_best_results_table(args):
                 elif args.hashp:
                     path = f"results/{dataset_name}/moebert_hash_perm_experiment_{experiment}/model"
                 else:
-                    path = f"results/{dataset_name}/experiment_{experiment}/model"
+                    path = f"results/squad_experiment_{experiment}/model"
                 try:
                     with open(path + "/all_results.json") as f:
                         all_results = json.load(f)
                 except FileNotFoundError:
                     all_results = {
-                        "eval_" + metric_dict[dataset_name]: 0,
+                        "best_" + metric_dict[dataset_name]: 0,
                         "epoch": 0,
                     }
                 try:
-                    if args.perm:
+                    if args.perm or args.hashp or args.hash:
                         with open(path + "/trainer_state_modified.json") as f:
                             train_log = json.load(f)
                     else:
@@ -594,6 +602,7 @@ def generate_best_results_summary(args):
 
 
 def main(args):
+    os.makedirs("results/squad", exist_ok=True)
 
     generate_best_results_table(args)
     #if args.aggregate:

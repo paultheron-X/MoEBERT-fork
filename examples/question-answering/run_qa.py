@@ -130,6 +130,22 @@ class ModelArguments:
         default=512,
         metadata={"help": "Amount of neurons to share across experts."}
     )
+    moebert_gate_gamma: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of gamma to use in the soft trees gating mechanism."}
+    )
+    moebert_gate_entropy: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of entropy to use in the entropy regularizer for gating."}
+    )
+    moebert_perm_epoch: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of entropy to use in the entropy regularizer for gating."}
+    )
+    moebert_k: Optional[float] = field(
+        default=1,
+        metadata={"help": "value of k for the number of experts"}
+    )
 
 
 @dataclass
@@ -338,6 +354,11 @@ def main():
     config.moebert_route_hash_list = model_args.moebert_route_hash_list
     config.moebert_route_method = model_args.moebert_route_method
     config.moebert_share_importance = model_args.moebert_share_importance
+    config.moebert_gate_gamma = model_args.moebert_gate_gamma
+    config.moebert_gate_entropy = model_args.moebert_gate_entropy
+    config.moebert_perm_epoch = model_args.moebert_perm_epoch
+    config.moebert_k = model_args.moebert_k
+
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
@@ -532,7 +553,9 @@ def main():
                 (o if sequence_ids[k] == context_index else None)
                 for k, o in enumerate(tokenized_examples["offset_mapping"][i])
             ]
-
+        #tokenized_examples_w_pos = prepare_train_features(examples)
+        #tokenized_examples["start_positions"] = tokenized_examples_w_pos["start_positions"]
+        #tokenized_examples["end_positions"] = tokenized_examples_w_pos["end_positions"]
         return tokenized_examples
 
     if training_args.do_eval:

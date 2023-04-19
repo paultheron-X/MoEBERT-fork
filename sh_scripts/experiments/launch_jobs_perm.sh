@@ -36,4 +36,7 @@ then
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 3 4e-5 8 0.1 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 4 4e-5 8 0.1 6 $2
     bash sh_scripts/experiments/hyper_param_perm_metatuner.sh mrpc 5 4e-5 8 0.1 6 $2
+elif [ $1 = "squad_v2" ]
+then
+    bash sh_scripts/experiments/hyper_param_perm_metatuner_squad.sh $1 $3 4e-5 8 0.1 6 $2
 fi
