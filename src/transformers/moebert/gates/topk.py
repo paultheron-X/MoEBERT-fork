@@ -43,9 +43,8 @@ class TopKGate(nn.Module):
         self.nb_experts = config["nb_experts"]
         self.k = config["k"]
         self.jitter = config["jitter"]
-
-        self.gate_weights = nn.Parameter(torch.Tensor(self.nb_experts, config["input_dim"]))
-        self.bias = nn.Parameter(torch.zeros(self.nb_experts))
+        
+        self.layer = nn.Linear(config["input_dim"], self.nb_experts, bias=True)
 
         if self.jitter:
             self.jitter_weights = nn.Parameter(torch.Tensor(self.nb_experts, config["input_dim"]))
@@ -57,7 +56,8 @@ class TopKGate(nn.Module):
         f = [t.unsqueeze(-1) for t in f]
         f = torch.cat(f, dim=2)
 
-        gate_logits = torch.matmul(x, self.gate_weights.t()) + self.bias.unsqueeze(0)
+        gate_logits = self.layer(x)
+        
 
         if self.jitter and training:
             gate_logits += torch.randn_like(gate_logits) * F.softplus(torch.matmul(x, self.jitter_weights.t()))
@@ -68,15 +68,21 @@ class TopKGate(nn.Module):
         row_tensor = row_range.unsqueeze(-1).expand(-1, self.k)
         topk_row_col_indices = torch.stack([row_tensor, topk.indices], dim=2)
 
-        topk_scattered = torch.zeros_like(gate_logits).scatter_(1, topk.indices, topk.values).unsqueeze(-1)
-
-        g = F.softmax(torch.where(topk_scattered == 0, float("-inf"), topk_scattered), dim=1)
-
+        topk_scattered = (-torch.inf*torch.ones_like(gate_logits)).scatter_(1, topk.indices, topk.values).unsqueeze(-1)
+        
+        #print('topk_scattered', topk_scattered)
+        #print('topk_scattered shape', topk_scattered.shape)
+        
+        g = F.softmax(topk_scattered, dim=1)
+        #print('g shape', g.shape)
+        #print('g', g)
+        
         #permutation_weights = permutation_weights.mean(dim=0)
         #g_permuted = torch.einsum("bik,ij->bjk", g, permutation_weights)
         #g_permuted = g_permuted / g_permuted.sum(dim=1, keepdim=True)
 
         g_permuted = g  # no permutation
+        #print(torch.matmul(f, g_permuted).shape)
         y = torch.matmul(f, g_permuted).view(-1, f.shape[1])
         
         # Calculate metrics
@@ -104,3 +110,55 @@ class TopKGate(nn.Module):
         metrics[f'simplex_constraint_fails_for_task_{self.task+1}'] = simplex_constraint_fails
 
         return y, soft_averages, hard_averages, s_concat, 0 # reg loss
+
+def test_forward():
+    # Set up config and instantiate the TopKGate
+    config = {
+        "task": 0,
+        "nb_experts": 5,
+        "k": 2,
+        "jitter": False,
+        "input_dim": 10
+    }
+    gate = TopKGate(config)
+
+    # Test data
+    batch_size = 8
+    num_experts = config["nb_experts"]
+    input_dim = config["input_dim"]
+    expert_dim = 20
+
+    # Generate some experts
+    experts = [Linear(input_dim, expert_dim) for _ in range(num_experts)]
+
+    # Generate some inputs
+    x = torch.randn(batch_size, input_dim)
+    f = [expert(x) for expert in experts]
+
+    # Pass inputs through the gate
+    y, soft_averages, hard_averages, s_concat, reg_loss = gate((f, x))
+
+    print('input size', x.size())
+    print('input', x)
+    
+    # Check output size
+    print("Checking output size...")
+    print('y', y.size())
+    print('y', y)
+    
+    # Check metrics
+    print('soft_averages', soft_averages.size())
+    
+    print('hard_averages', hard_averages.size())
+    
+    print('s_concat', s_concat.size())
+
+    #print("All tests passed!")
+
+if __name__ == "__main__":
+    import torch
+    from torch.nn import Linear
+    
+    with torch.no_grad():
+        test_forward()
+
