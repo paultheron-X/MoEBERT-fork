@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .gates import SoftTreeGate, SoftTreePermutedGate
+from .gates import SoftTreeGate, SoftTreePermutedGate, TopKGate
 from .permutations import NoPermutations, LearnPermutations, LearnPermutationsBase
 
 
@@ -21,6 +21,15 @@ class MoELayer(nn.Module):
             self.hash_list = self._random_hash_list(vocab_size)
         elif route_method == "hash-balance":
             self.hash_list = self._balance_hash_list(hash_list)
+        elif route_method == "topk":
+            config = {
+                "k": k,
+                "jitter": False,
+                "nb_experts": num_experts,
+                "task" : 0,
+                "input_dim": hidden_size,
+            }
+            self.gate = TopKGate(hidden_size, num_experts, k)
         elif route_method == "hash-p":
             self.hash_list = self._random_hash_list(vocab_size)
             config_perm = {
@@ -366,6 +375,33 @@ class MoELayer(nn.Module):
         x = x.view(bsz, seq_len, dim)  # x is now a 3D tensor of size (bsz, seq_len, dim)
 
         return x, 0.0, gate_load  # return x, balance_loss, gate_load
+    
+    def _forward_topk(self, x):
+        # TOFILL 
+        bsz, seq_len, dim = x.size()  # bsz is batch size, seq_len is sequence length, dim is hidden size
+        
+        x = x.view(-1, dim)  # x is now a 2D tensor of size (bsz * seq_len, dim)
+        
+        def forward_expert(input_x, expert_idx):
+            input_x = self.experts[expert_idx].forward(input_x)
+            return input_x
+
+        h = [forward_expert(x, i) for i in range(self.num_experts)]
+
+        # pass the hidden states to the gate
+        y_agg, soft_averages, hard_averages, s_concat, regularization_loss = self.gate.forward((h, x))
+        # print("y_agg", y_agg.shape)
+        # print("soft_averages", soft_averages.shape)
+        # print("hard_averages", hard_averages.shape)
+
+        # print(y_agg)
+        # print("soft_averages", soft_averages)
+        # print("hard_averages", hard_averages)
+
+        x = y_agg.view(bsz, seq_len, dim)
+
+        return x, regularization_loss, s_concat
+        
 
     def forward(self, x, input_ids, attention_mask):
         if self.route_method == "gate-token":
@@ -377,6 +413,8 @@ class MoELayer(nn.Module):
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm_bis(x)
         elif self.route_method == "soft-tree-oldpgate":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
+        elif self.route_method == "topk":
+            x, balance_loss, gate_load = self._forward_topk(x)
         elif self.route_method == "hash-p":
             x, balance_loss, gate_load = self._forward_hash_random_perm(x, input_ids)
         elif self.route_method == "soft-tree-sentence":
