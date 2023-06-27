@@ -21,6 +21,7 @@ def merge(args):
         "importance": importance_sorted.tolist(),
         "idx": importance_idx.tolist()
     }
+    os.makedirs(f"results/{args.task}/experiment_{args.task}_template", exist_ok=True)
     with open(f"results/{args.task}/experiment_{args.task}_template/importance_{args.task}.pkl", "wb") as file:
         pickle.dump(result, file)
     print("Done dumping...")
