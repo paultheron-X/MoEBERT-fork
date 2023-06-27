@@ -2,8 +2,8 @@
 #SBATCH --partition=xeon-g6-volta 
 #SBATCH --constraint=xeon-g6
 #SBATCH -t 0-48:0
-#SBATCH -o logs/moebert_perm_tuning/out_%A_%a.txt #redirect output to output_JOBID.txt
-#SBATCH -e logs/moebert_perm_tuning/err_%A_%a.txt #redirect errors to error_JOBID.txt
+#SBATCH -o logs/topk/topk_tuning_out_%A_%a.txt #redirect output to output_JOBID.txt
+#SBATCH -e logs/topk/topk_tuning_err_%A_%a.txt #redirect errors to error_JOBID.txt
 #SBATCH --gres=gpu:volta:1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -21,7 +21,7 @@ module load anaconda/2021b
 source activate MoEBERT
 
 export TOTAL_GPUS=${SLURM_NTASKS}
-export GPUS_PER_NODE=2
+export GPUS_PER_NODE=1
 
 echo "Total number of GPUs: $TOTAL_GPUS"
 echo "GPUs per node: $GPUS_PER_NODE"
@@ -51,11 +51,12 @@ TASK_ID=$SLURM_ARRAY_TASK_ID
 EXP_ID="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 
 
-task_names=(cola rte mrpc sst2 qnli qqp mnli qnli)
-weight_decays=(0, 0.01, 0.1)
-distillations=(1, 2, 3, 4, 5)
+task_names=(cola) # rte mrpc sst2 qnli qqp mnli qnli)
+weight_decays=(0 0.01 0.1)
+distillations=(1 2 3 4 5)
 
-task=${task_names[TASK_ID%7]}
+#task=${task_names[TASK_ID%1]}
+task=${task_names[0]}
 distillation=${distillations[TASK_ID%5]}
 weight_decay=${weight_decays[TASK_ID%3]}
 
@@ -63,8 +64,12 @@ echo $TASK_ID
 
 echo $EXP_ID
 
+export exp_name="dis_${distillation}_wdec_${weight_decay}"
+
 echo 'Task: ' $task
 
 export output_dir="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 
-srun bash sh_scripts/new_experiments/base_moebert_trainer_k2.sh $task $EXP_ID $distillation $weight_decay
+srun bash sh_scripts/new_experiments/base_moebert_trainer_k2.sh $task $exp_name $distillation $weight_decay
+
+rm -r $output_dir/$task/new_moebert_k2_experiment_$exp_name/model/checkpoint-*

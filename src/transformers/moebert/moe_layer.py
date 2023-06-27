@@ -29,7 +29,7 @@ class MoELayer(nn.Module):
                 "task" : 0,
                 "input_dim": hidden_size,
             }
-            self.gate = TopKGate(hidden_size, num_experts, k)
+            self.gate = TopKGate(config)
         elif route_method == "hash-p":
             self.hash_list = self._random_hash_list(vocab_size)
             config_perm = {

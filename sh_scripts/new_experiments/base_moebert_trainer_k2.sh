@@ -73,10 +73,10 @@ fi
 
 export LOCAL_SEED=0
 
-echo "Number of epochs is $num_epochs"
+echo "Number of epochs is $num_epoch"
 
 python examples/text-classification/run_glue.py \
-    --model_name_or_path $original_model_dir/model \
+    --model_name_or_path $original_model_dir \
     --task_name $1 \
     --per_device_train_batch_size $batch_size \
     --weight_decay $4 \
@@ -85,7 +85,7 @@ python examples/text-classification/run_glue.py \
     --do_eval \
     --do_predict \
     --max_seq_length 128 \
-    --num_train_epochs $num_epochs \
+    --num_train_epochs $num_epoch \
     --output_dir $saving_dir/model \
     --overwrite_output_dir \
     --logging_steps 20 \
@@ -109,5 +109,4 @@ python examples/text-classification/run_glue.py \
     --moebert_load_importance $LOCAL_OUTPUT/$1/experiment_${1}_template/importance_$1.pkl \
     --moebert_route_method topk \
     --moebert_share_importance 512 \
-    --moebert_k 2
-fi
+    --moebert_k 2 

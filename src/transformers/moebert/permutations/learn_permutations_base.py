@@ -110,7 +110,11 @@ class LearnPermutationsBase(nn.Module):
     def _generate_mask_per_permutation(self, permutation_weights):
         permutation_weights = torch.squeeze(permutation_weights)
         cost = -permutation_weights
-        row_ind, col_ind = scipy.optimize.linear_sum_assignment(cost.cpu().detach().numpy())  # to recheck
+        try:
+            row_ind, col_ind = scipy.optimize.linear_sum_assignment(cost.cpu().detach().numpy())  # to recheck
+        except ValueError:
+            print("ValueError")
+            row_ind, col_ind = np.arange(permutation_weights.shape[0]), np.arange(permutation_weights.shape[1])
         permutation_mask = torch.eye(permutation_weights.shape[-1])[torch.tensor(col_ind)]
         return permutation_mask
 

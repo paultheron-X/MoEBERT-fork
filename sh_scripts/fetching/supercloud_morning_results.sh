@@ -16,11 +16,11 @@ python sh_scripts/python_helpers/get_results.py --advanced
 
 
 #python sh_scripts/python_helpers/preprocess_sparsity_error.py
-# Get the experiments from moebert perm experiments
+#Get the experiments from moebert perm experiments
     # No Sparsity
-#python sh_scripts/python_helpers/get_results.py --perm
+python sh_scripts/python_helpers/get_results.py --perm
     # Sparsity
-#python sh_scripts/python_helpers/get_results.py --perm --sparsity
+python sh_scripts/python_helpers/get_results.py --perm --sparsity
 
 # Get the experiments from hash
 #python sh_scripts/python_helpers/get_results.py --hash

@@ -8,7 +8,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=20
-#SBATCH --array=1-9
+#SBATCH --array=1-2
 
 
 # Initialize the module command first

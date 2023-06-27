@@ -41,7 +41,7 @@ class TopKGate(nn.Module):
         super(TopKGate, self).__init__()
         self.task = config["task"]
         self.nb_experts = config["nb_experts"]
-        self.k = config["k"]
+        self.k = int(config["k"])
         self.jitter = config["jitter"]
         
         self.layer = nn.Linear(config["input_dim"], self.nb_experts, bias=True)
@@ -64,7 +64,7 @@ class TopKGate(nn.Module):
 
         topk = torch.topk(gate_logits, self.k)
 
-        row_range = torch.arange(gate_logits.shape[0])
+        row_range = torch.arange(gate_logits.shape[0], device=gate_logits.device)
         row_tensor = row_range.unsqueeze(-1).expand(-1, self.k)
         topk_row_col_indices = torch.stack([row_tensor, topk.indices], dim=2)
 
