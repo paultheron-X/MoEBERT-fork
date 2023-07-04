@@ -31,7 +31,7 @@ then
     export metric_for_best_model="f1"
 elif [ $1 = 'mnli' ]
 then
-    export original_model_dir='ishan/bert-base-uncased-mnli'
+    export original_model_dir='textattack/bert-base-uncased-MNLI'
     export metric_for_best_model="accuracy"
 elif [ $1 = 'qnli' ]
 then

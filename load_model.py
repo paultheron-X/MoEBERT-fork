@@ -22,7 +22,7 @@ models_list = [
     "gchhablani/bert-base-cased-finetuned-sst2",
     "textattack/bert-base-uncased-QNLI",
     "gchhablani/bert-base-cased-finetuned-qqp",
-    "ishan/bert-base-uncased-mnli",
+    "textattack/bert-base-uncased-MNLI",
 ]
 
 for model_ in models_list:

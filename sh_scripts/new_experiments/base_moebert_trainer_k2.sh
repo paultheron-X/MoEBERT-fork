@@ -36,7 +36,7 @@ then
     export batch_size=8
     export learning_rate=3e-5
     export eval_steps=200
-    export num_epoch=5
+    export num_epoch=10
 elif [ $1 = 'sst2' ]
 then
     export original_model_dir='gchhablani/bert-base-cased-finetuned-sst2'
@@ -55,7 +55,7 @@ then
     export num_epoch=5
 elif [ $1 = 'mnli' ]
 then
-    export original_model_dir='ishan/bert-base-uncased-mnli'
+    export original_model_dir='textattack/bert-base-uncased-MNLI'
     export metric_for_best_model="accuracy"
     export batch_size=64
     export learning_rate=5e-5
@@ -71,7 +71,7 @@ then
     export num_epoch=5
 fi
 
-export LOCAL_SEED=0
+export LOCAL_SEED=1
 
 echo "Number of epochs is $num_epoch"
 

@@ -48,7 +48,7 @@ cd /home/gridsan/$(whoami)/MoEBERT-fork
 
 export output_dir="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 
-for dset in cola sst2 mrpc qqp mnli qnli rte
+for dset in mnli
 do
     bash sh_scripts/new_experiments/importance_preprocess_new.sh $dset $output_dir
     python merge_importance.py --task $dset

@@ -8,7 +8,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=20
-#SBATCH --array=1-2
+#SBATCH --array=0-119
 
 
 # Initialize the module command first
@@ -51,12 +51,12 @@ TASK_ID=$SLURM_ARRAY_TASK_ID
 EXP_ID="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 
 
-task_names=(cola) # rte mrpc sst2 qnli qqp mnli qnli)
+task_names=(rte mrpc sst2 qnli qqp mnli qnli cola)
 weight_decays=(0 0.01 0.1)
 distillations=(1 2 3 4 5)
 
-#task=${task_names[TASK_ID%1]}
-task=${task_names[0]}
+task=${task_names[TASK_ID%8]}
+#task=${task_names[0]}
 distillation=${distillations[TASK_ID%5]}
 weight_decay=${weight_decays[TASK_ID%3]}
 
@@ -64,7 +64,7 @@ echo $TASK_ID
 
 echo $EXP_ID
 
-export exp_name="dis_${distillation}_wdec_${weight_decay}"
+export exp_name="dis_${distillation}_wdec_${weight_decay}_seed_1"
 
 echo 'Task: ' $task
 
