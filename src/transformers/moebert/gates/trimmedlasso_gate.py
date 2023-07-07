@@ -47,7 +47,7 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
         self.epsilon = 1e-6
         self.tau = float(config["tau"])
         self.trimmed_lasso_reg = config["trimmed_lasso_reg"]
-        self.num_training_samples = config["num_training_samples"]
+        self.num_training_samples = config["num_training_samples"] 
         self.biasness = config["biasness"] if "biasness" in config else "zero"
         self.replace = config["replace"] if "replace" in config else False
         print("===================replace=========================", self.replace)
@@ -62,18 +62,18 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
 
         self.gate_weights = nn.Linear(config["input_dim"], self.nb_experts, bias=self.use_bias)
 
-        self.g_sparse = nn.Linear(self.num_training_samples, self.nb_experts, bias=False)
+        #self.g_sparse = nn.Linear(self.num_training_samples, self.nb_experts, bias=False)
         
-        self.g_sparse.weight.requires_grad = False
+        #self.g_sparse.weight.requires_grad = False
 
         self.init_weights()
 
     def init_weights(self):
         if self.use_bias:
             nn.init.zeros_(self.gate_weights.bias)
-        nn.init.zeros_(self.g_sparse.weight)
+        #nn.init.zeros_(self.g_sparse.weight)
 
-    
+    @torch.no_grad()
     def _get_mask_torch(self, w, k, replace):
         p = w.clone()
         p = p.float()
@@ -153,7 +153,7 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
         return topk_tensor
 
 
-    def forward(self, inputs, training, indices=None, sample_indices=None):
+    def forward(self, inputs, indices=None, sample_indices=None):
         h, x = inputs
         assert all([h[i].size(1) == h[i + 1].size(1) for i in range(len(h) - 1)])
 
@@ -165,7 +165,7 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
 
         gate_logits = self.gate_weights(x)
 
-        if self.jitter and training:
+        if self.jitter and self.training:
             gate_logits += torch.randn(gate_logits.shape, device=gate_logits.device) * self.epsilon
 
         gate_logits /= self.tau
@@ -173,12 +173,12 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
         g = F.softmax(gate_logits, dim=1)
         prob_mass_sorted = torch.mean(g.sort(dim=1, descending=True).values, dim=0)
 
-        if training:
+        if self.training:
             g_topk = self._topk(g, k)
             trimmed_lasso_loss = torch.mean(torch.sum(torch.abs(g - g_topk), dim=1), dim=0)
             self.loss = self.trimmed_lasso_reg * trimmed_lasso_loss
 
-        if training:
+        if self.training:
             g_on_sampled_mask = self._sampled_softmax(
                 gate_logits, g, k=k, biasness=self.biasness, replace=self.replace, deterministic=False
             )
@@ -190,21 +190,21 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
 
         g_permuted = g_on_sampled_mask
 
-        if training:
-            g_sparse_previous = self.g_sparse.weight[sample_indices, :]
-            mask_previous = torch.where(
-                g_sparse_previous == 0.0, torch.zeros_like(g_sparse_previous), torch.ones_like(g_sparse_previous)
-            )
-
-            g_sparse_current = g_permuted.squeeze(dim=2)
-            mask_current = torch.where(
-                g_sparse_current == 0.0, torch.zeros_like(g_sparse_current), torch.ones_like(g_sparse_current)
-            )
-            mask_diff = torch.abs(mask_current - mask_previous)
-            routing_consistency = torch.mean(mask_diff)
-            self.routing_consistency_metric = routing_consistency
-
-            self.g_sparse.weight[sample_indices, :] = g_sparse_current
+        #if training:
+        #    g_sparse_previous = self.g_sparse.weight[sample_indices, :]
+        #    mask_previous = torch.where(
+        #        g_sparse_previous == 0.0, torch.zeros_like(g_sparse_previous), torch.ones_like(g_sparse_previous)
+        #    )
+        #
+        #    g_sparse_current = g_permuted.squeeze(dim=2)
+        #    mask_current = torch.where(
+        #        g_sparse_current == 0.0, torch.zeros_like(g_sparse_current), torch.ones_like(g_sparse_current)
+        #    )
+        #    mask_diff = torch.abs(mask_current - mask_previous)
+        #    routing_consistency = torch.mean(mask_diff)
+        #    self.routing_consistency_metric = routing_consistency
+        #
+        #    self.g_sparse.weight[sample_indices, :] = g_sparse_current
 
         y = torch.matmul(h, g_permuted).view(-1, h.size(1))
 
@@ -231,7 +231,7 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
 
         self.simplex_constraint_fails_metric = simplex_constraint_fails
 
-        return y, soft_averages, hard_averages
+        return y, soft_averages, hard_averages, s_concat, 0
 
 
 def test_forward():
@@ -246,6 +246,8 @@ def test_forward():
         "tau": 1.0,
         "trimmed_lasso_reg": 0.0,
         'num_training_samples': 100,
+        'biasness': 'small-random',
+        'replace': False,
         
     }
     gate = SampleKSoftmaxUnbiasedWithTrimmedLassoGate(config)
@@ -264,7 +266,7 @@ def test_forward():
     f = [expert(x) for expert in experts]
 
     # Pass inputs through the gate
-    y, soft_averages, hard_averages, s_concat, reg_loss = gate((f, x), training=True)
+    y, soft_averages, hard_averages, s_concat, reg_loss, g_on_sampled_mask = gate((f, x), training=True)
 
     print('input size', x.size())
     print('input', x)
@@ -280,6 +282,10 @@ def test_forward():
     print('hard_averages', hard_averages.size())
     
     print('s_concat', s_concat.size())
+    print('s_concat', s_concat)
+    
+    print('g_on_sampled_mask', g_on_sampled_mask.size())
+    print('g_on_sampled_mask', g_on_sampled_mask)
 
     #print("All tests passed!")
 

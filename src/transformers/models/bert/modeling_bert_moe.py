@@ -73,6 +73,7 @@ class MoEBertLayer(BertLayer):
                 entropy_reg=config.moebert_gate_entropy,
                 perm_epoch=config.moebert_perm_epoch,
                 k=config.moebert_k,
+                trimmed_lasso_reg = config.moebert_trimmed_lasso_reg,
             )
             self.importance_processor = ImportanceProcessor(config, layer_idx, config.moebert_expert_num, 0)
         elif self.perm:

@@ -54,22 +54,25 @@ EXP_ID="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 task_names=(rte mrpc sst2 qnli qqp mnli qnli cola)
 weight_decays=(0 0.01 0.1)
 distillations=(1 2 3 4 5)
+trimmed_lasso_regs=(0.0001 0.001 0.01 0.1 1.0 10.0)
 
 task=${task_names[TASK_ID%8]}
 #task=${task_names[0]}
 distillation=${distillations[TASK_ID%5]}
 weight_decay=${weight_decays[TASK_ID%3]}
+trimmed_lasso_reg=${trimmed_lasso_regs[TASK_ID%6]}
+
 
 echo $TASK_ID
 
 echo $EXP_ID
 
-export exp_name="dis_${distillation}_wdec_${weight_decay}_seed_1"
+export exp_name="dis_${distillation}_wdec_${weight_decay}_trl_${trimmed_lasso_reg}_seed_1"
 
 echo 'Task: ' $task
 
 export output_dir="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 
-srun bash sh_scripts/new_experiments/base_moebert_trainer_k2.sh $task $exp_name $distillation $weight_decay
+srun bash sh_scripts/new_experiments/base_moebert_trainer_k2.sh $task $exp_name $distillation $weight_decay $trimmed_lasso_reg
 
 rm -r $output_dir/$task/new_moebert_k2_experiment_$exp_name/model/checkpoint-*

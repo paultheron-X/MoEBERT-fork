@@ -5,12 +5,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .gates import SoftTreeGate, SoftTreePermutedGate, TopKGate
+from .gates import SoftTreeGate, SoftTreePermutedGate, TopKGate, SampleKSoftmaxUnbiasedWithTrimmedLassoGate
 from .permutations import NoPermutations, LearnPermutations, LearnPermutationsBase
 
 
 class MoELayer(nn.Module):
-    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list, gamma, entropy_reg, perm_epoch, k=1):
+    def __init__(self, hidden_size, num_experts, expert, route_method, vocab_size, hash_list, gamma, entropy_reg, perm_epoch, trimmed_lasso_reg, k=1):
         nn.Module.__init__(self)
         self.num_experts = num_experts
         self.experts = nn.ModuleList([copy.deepcopy(expert) for i in range(num_experts)])
@@ -43,7 +43,21 @@ class MoELayer(nn.Module):
 
             }
             self.gate_perm = LearnPermutationsBase(config_perm)
-
+        elif route_method == "trimmed_lasso":
+            config = {
+                "task": 0,
+                "nb_experts": num_experts,
+                "k": k,
+                "jitter": False,
+                "input_dim": hidden_size,
+                "use_routing_input": False,
+                "tau": 1.0,
+                "trimmed_lasso_reg": trimmed_lasso_reg,
+                'num_training_samples': 100,  # don't care
+                'biasness': 'small-random',
+                'replace': False,
+            }
+            self.gate = SampleKSoftmaxUnbiasedWithTrimmedLassoGate(config)
         elif route_method in ["soft-tree"]:
             config = {
                 "k": k,
@@ -414,6 +428,8 @@ class MoELayer(nn.Module):
         elif self.route_method == "soft-tree-oldpgate":
             x, balance_loss, gate_load = self._forward_soft_tree_gate_perm(x)
         elif self.route_method == "topk":
+            x, balance_loss, gate_load = self._forward_topk(x)
+        elif self.route_method == "trimmed_lasso":
             x, balance_loss, gate_load = self._forward_topk(x)
         elif self.route_method == "hash-p":
             x, balance_loss, gate_load = self._forward_hash_random_perm(x, input_ids)

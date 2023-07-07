@@ -237,6 +237,10 @@ class ModelArguments:
         default=1,
         metadata={"help": "value of k for the number of experts"}
     )
+    moebert_trimmed_lasso_reg: Optional[float] = field(
+        default=0.0,
+        metadata={"help": "value of the trimmed lasso regularization"}
+    )
     apply_lora: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to apply LoRA or not."},
@@ -446,6 +450,7 @@ def main():
     config.moebert_gate_entropy = model_args.moebert_gate_entropy
     config.moebert_perm_epoch = model_args.moebert_perm_epoch
     config.moebert_k = model_args.moebert_k
+    config.moebert_trimmed_lasso_reg = model_args.moebert_trimmed_lasso_reg
     
 
     tokenizer = AutoTokenizer.from_pretrained(
