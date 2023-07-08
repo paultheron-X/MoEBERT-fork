@@ -2,13 +2,13 @@
 #SBATCH --partition=xeon-g6-volta 
 #SBATCH --constraint=xeon-g6
 #SBATCH -t 0-48:0
-#SBATCH -o logs/topk/topk_tuning_out_%A_%a.txt #redirect output to output_JOBID.txt
-#SBATCH -e logs/topk/topk_tuning_err_%A_%a.txt #redirect errors to error_JOBID.txt
+#SBATCH -o logs/trimmed/trimmed_tuning_out_%A_%a.txt #redirect output to output_JOBID.txt
+#SBATCH -e logs/trimmed/trimmed_tuning_err_%A_%a.txt #redirect errors to error_JOBID.txt
 #SBATCH --gres=gpu:volta:1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=20
-#SBATCH --array=0-119
+#SBATCH --array=0-0
 
 
 # Initialize the module command first

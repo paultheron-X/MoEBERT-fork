@@ -42,7 +42,7 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
         self.task = config["task"]
         self.use_routing_input = config["use_routing_input"]
         self.nb_experts = config["nb_experts"]
-        self.k = config["k"]
+        self.k = int(config["k"])
         self.jitter = config["jitter"] if config["jitter"] is not None else False
         self.epsilon = 1e-6
         self.tau = float(config["tau"])
