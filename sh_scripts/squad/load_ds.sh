@@ -14,7 +14,7 @@ LEARNING_RATE="2e-5"
 WEIGHT_DECAY="0.01"
 NUM_EPOCHS=5
 
-# python load_datasets.py
+python load_datasets.py
 #python load_datasets.py --task ${GLUE_TASK}
 python load_model.py --model ${HF_MODEL_NAME}
 rsync -a --ignore-existing ${HF_LOCAL_DIR}/ $HF_USER_DIR

@@ -2,14 +2,13 @@
 #SBATCH --partition=xeon-g6-volta 
 #SBATCH --constraint=xeon-g6
 #SBATCH -t 0-48:0
-#SBATCH -o logs/trimmed/trimmed_tuning_out_%A_%a.txt #redirect output to output_JOBID.txt
-#SBATCH -e logs/trimmed/trimmed_tuning_err_%A_%a.txt #redirect errors to error_JOBID.txt
+#SBATCH -o logs/mnli_new/trimmed_tuning_out_%A_%a.txt #redirect output to output_JOBID.txt
+#SBATCH -e logs/mnli_new/trimmed_tuning_err_%A_%a.txt #redirect errors to error_JOBID.txt
 #SBATCH --gres=gpu:volta:1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=20
-#SBATCH --array=0-0
-
+#SBATCH --array=100-300
 
 # Initialize the module command first
 source /etc/profile
@@ -51,28 +50,40 @@ TASK_ID=$SLURM_ARRAY_TASK_ID
 EXP_ID="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 
 
-task_names=(rte mrpc sst2 qnli qqp mnli qnli cola)
+task_names=(mnli)   #(rte mrpc sst2 qnli qqp qnli cola) # mnli not included
 weight_decays=(0 0.01 0.1)
 distillations=(1 2 3 4 5)
-trimmed_lasso_regs=(0.0001 0.001 0.01 0.1 1.0 10.0)
+trimmed_lasso_regs=(0.001 0.01 0.1 1.0 5.0)    #(0.0001 0.001 0.01 0.1 1.0 5.0 10.0)
+gates=(topk lasso)
 
-task=${task_names[TASK_ID%8]}
+task=${task_names[TASK_ID%2]}
 #task=${task_names[0]}
 distillation=${distillations[TASK_ID%5]}
 weight_decay=${weight_decays[TASK_ID%3]}
-trimmed_lasso_reg=${trimmed_lasso_regs[TASK_ID%6]}
+trimmed_lasso_reg=${trimmed_lasso_regs[TASK_ID%7]}
+gate=${gates[TASK_ID%2]}
 
+if [ $task = 'squad' ] || [ $task = 'squad_v2' ]
+then
+    gate='topk'
+fi
 
 echo $TASK_ID
 
 echo $EXP_ID
 
-export exp_name="dis_${distillation}_wdec_${weight_decay}_trl_${trimmed_lasso_reg}_seed_1"
-
 echo 'Task: ' $task
 
 export output_dir="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 
-srun bash sh_scripts/new_experiments/base_moebert_trainer_k2.sh $task $exp_name $distillation $weight_decay $trimmed_lasso_reg
+
+if [ $gate = 'topk' ]
+then
+    export exp_name="topk_dis_${distillation}_wdec_${weight_decay}_seed_2"
+    srun bash sh_scripts/new_experiments/base_moebert_trainer_k2_topk.sh $task $exp_name $distillation $weight_decay 
+elif [ $gate = 'lasso' ]
+    export exp_name="dis_${distillation}_wdec_${weight_decay}_trl_${trimmed_lasso_reg}_seed_2"
+    srun bash sh_scripts/new_experiments/base_moebert_trainer_k2.sh $task $exp_name $distillation $weight_decay $trimmed_lasso_reg
+fi
 
 rm -r $output_dir/$task/new_moebert_k2_experiment_$exp_name/model/checkpoint-*

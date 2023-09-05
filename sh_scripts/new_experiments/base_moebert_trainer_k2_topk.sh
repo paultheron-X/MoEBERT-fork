@@ -7,7 +7,6 @@ echo "Task name is $1"
 echo "experiment name is $2"
 echo "Distillation is $3"
 echo "Weight decay is $4"
-echo "Trimmed lasso reg is $5"
 
 export LOCAL_OUTPUT="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 
@@ -125,10 +124,9 @@ then
     --moebert_expert_dropout 0.1 \
     --moebert_load_balance 1.0 \
     --moebert_load_importance $LOCAL_OUTPUT/$1/experiment_${1}_template/importance_$1.pkl \
-    --moebert_route_method trimmed_lasso \
+    --moebert_route_method topk \
     --moebert_share_importance 512 \
-    --moebert_k 2 \
-    --moebert_trimmed_lasso_reg $5
+    --moebert_k 2 
 elif [ $1 = 'squad' ] 
 then
     python examples/question-answering/run_qa.py \
@@ -162,10 +160,9 @@ then
     --moebert_expert_dropout 0.1 \
     --moebert_load_balance 1.0 \
     --moebert_load_importance $LOCAL_OUTPUT/$1/experiment_${1}_template/importance_$1.pkl \
-    --moebert_route_method trimmed_lasso \
+    --moebert_route_method topk \
     --moebert_share_importance 512 \
-    --moebert_k 2 \
-    --moebert_trimmed_lasso_reg $5
+    --moebert_k 2 
 else 
     python examples/text-classification/run_glue.py \
     --model_name_or_path $original_model_dir \
@@ -199,8 +196,7 @@ else
     --moebert_expert_dropout 0.1 \
     --moebert_load_balance 1.0 \
     --moebert_load_importance $LOCAL_OUTPUT/$1/experiment_${1}_template/importance_$1.pkl \
-    --moebert_route_method trimmed_lasso \
+    --moebert_route_method topk \
     --moebert_share_importance 512 \
-    --moebert_k 2 \
-    --moebert_trimmed_lasso_reg $5
+    --moebert_k 2 
 fi

@@ -173,6 +173,7 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
         g = F.softmax(gate_logits, dim=1)
         prob_mass_sorted = torch.mean(g.sort(dim=1, descending=True).values, dim=0)
 
+        self.loss = 0
         if self.training:
             g_topk = self._topk(g, k)
             trimmed_lasso_loss = torch.mean(torch.sum(torch.abs(g - g_topk), dim=1), dim=0)
@@ -231,7 +232,7 @@ class SampleKSoftmaxUnbiasedWithTrimmedLassoGate(nn.Module):
 
         self.simplex_constraint_fails_metric = simplex_constraint_fails
 
-        return y, soft_averages, hard_averages, s_concat, 0
+        return y, soft_averages, hard_averages, s_concat, self.loss
 
 
 def test_forward():
@@ -266,7 +267,13 @@ def test_forward():
     f = [expert(x) for expert in experts]
 
     # Pass inputs through the gate
-    y, soft_averages, hard_averages, s_concat, reg_loss, g_on_sampled_mask = gate((f, x), training=True)
+    gate.eval()
+    print('Evaluating...')
+    y, soft_averages, hard_averages, s_concat, _ = gate((f, x))
+    
+    gate.train()
+    print('Training...')
+    y, soft_averages, hard_averages, s_concat, _ = gate((f, x))
 
     print('input size', x.size())
     print('input', x)
@@ -284,8 +291,8 @@ def test_forward():
     print('s_concat', s_concat.size())
     print('s_concat', s_concat)
     
-    print('g_on_sampled_mask', g_on_sampled_mask.size())
-    print('g_on_sampled_mask', g_on_sampled_mask)
+    #print('g_on_sampled_mask', g_on_sampled_mask.size())
+    #print('g_on_sampled_mask', g_on_sampled_mask)
 
     #print("All tests passed!")
 

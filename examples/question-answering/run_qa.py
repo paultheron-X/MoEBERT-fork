@@ -146,6 +146,10 @@ class ModelArguments:
         default=1,
         metadata={"help": "value of k for the number of experts"}
     )
+    moebert_trimmed_lasso_reg: Optional[float] = field(
+        default=0.0,
+        metadata={"help": "value of the trimmed lasso regularization"}
+    )
 
 
 @dataclass
@@ -358,7 +362,7 @@ def main():
     config.moebert_gate_entropy = model_args.moebert_gate_entropy
     config.moebert_perm_epoch = model_args.moebert_perm_epoch
     config.moebert_k = model_args.moebert_k
-
+    config.moebert_trimmed_lasso_reg = model_args.moebert_trimmed_lasso_reg
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
@@ -553,6 +557,8 @@ def main():
                 (o if sequence_ids[k] == context_index else None)
                 for k, o in enumerate(tokenized_examples["offset_mapping"][i])
             ]
+        
+        # comment the following lines if you want to train moebert, uncomment for computing importance
         #tokenized_examples_w_pos = prepare_train_features(examples)
         #tokenized_examples["start_positions"] = tokenized_examples_w_pos["start_positions"]
         #tokenized_examples["end_positions"] = tokenized_examples_w_pos["end_positions"]

@@ -8,8 +8,8 @@
 #SBATCH --time=0-24:0
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=paulth@mit.edu
-#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/importance_new/experiments_importance_out%j.txt
-#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/importance_new/experiments_importance_err%j.txt
+#SBATCH --output=/home/gridsan/ptheron/MoEBERT-fork/logs/importance_mnli_new/experiments_importance_out%j.txt
+#SBATCH --error=/home/gridsan/ptheron/MoEBERT-fork/logs/importance_mnli_new/experiments_importance_err%j.txt
 
 # Initialize the module command first
 source /etc/profile
@@ -48,7 +48,7 @@ cd /home/gridsan/$(whoami)/MoEBERT-fork
 
 export output_dir="/home/gridsan/$(whoami)/MoEBERT-fork/results"
 
-for dset in mnli
+for dset in mnli;
 do
     bash sh_scripts/new_experiments/importance_preprocess_new.sh $dset $output_dir
     python merge_importance.py --task $dset
