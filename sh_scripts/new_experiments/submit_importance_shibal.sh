@@ -1,0 +1,54 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH --job-name bert_importance_all
+#SBATCH --gres=gpu:volta:1
+#SBATCH --tasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=4-00:00
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=shibal@mit.edu
+#SBATCH --output=/home/gridsan/shibal/MoEBERT-results/logs/MoEBERT/mnli/importance/experiments_importance_out%j.txt
+#SBATCH --error=/home/gridsan/shibal/MoEBERT-results/logs/MoEBERT/mnli/importance/experiments_importance_err%j.txt
+
+# Initialize the module command first
+source /etc/profile
+
+# Load modules
+module load anaconda/2022b
+#module load gurobi/gurobi-903
+
+# Call your script as you would from your command line
+source activate moebert
+
+export TOTAL_GPUS=${SLURM_NTASKS}
+
+echo "Total number of GPUs: $TOTAL_GPUS"
+
+if [ ! -e /proc/$(pidof nvidia-smi) ]
+then
+	echo "nvidia-smi does not seem to be running. exiting job"
+    exit 1
+fi
+
+HF_USER_DIR="/home/gridsan/$(whoami)/.cache/huggingface"
+HF_LOCAL_DIR="/state/partition1/user/$(whoami)/cache/huggingface"
+mkdir -p $HF_LOCAL_DIR
+rsync -a --ignore-existing $HF_USER_DIR/ ${HF_LOCAL_DIR}
+export HF_HOME=${HF_LOCAL_DIR}
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export WANDB_DISABLED="true"
+
+export BACKEND="pytorch"
+
+export HDF5_USE_FILE_LOCKING=FALSE
+
+cd /home/gridsan/$(whoami)/projects/MoEBERT-fork
+
+export output_dir="/home/gridsan/$(whoami)/MoEBERT-results"
+
+for dset in cola rte mrpc sst2 qqp qnli squad squad_v2;
+do
+    bash sh_scripts/new_experiments/importance_preprocess_new_shibal.sh $dset $output_dir
+    python merge_importance.py --task $dset
+done
